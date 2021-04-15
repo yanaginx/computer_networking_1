@@ -1,0 +1,211 @@
+\documentclass[a4paper,11pt]{extarticle}
+%\usepackage[english,vietnam]{babel}
+%\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage[T1]{fontenc}
+%\usepackage[utf8]{inputenc}
+%\usepackage[francais]{babel}
+\usepackage{a4wide,amssymb,epsfig,latexsym,multicol,array,hhline,fancyhdr}
+\usepackage{tabularx} % in the preamble
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{minted}
+%%%%%%%%%%%%
+\usepackage{verbatimbox}
+\usepackage{lscape}
+\usepackage{pdflscape}
+%%%%%%%%%%%%
+\usepackage{fancyvrb}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{tabularx}
+\usepackage{lastpage}
+\usepackage[lined,boxed,commentsnumbered]{algorithm2e}
+\usepackage{color}
+\usepackage{graphicx}							% Standard graphics package
+\usepackage{array}
+\usepackage{tabularx, caption}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{rotating}
+\usepackage{graphics}
+\usepackage[left=3.00cm, right=2.00cm, top=2.50cm, bottom=4.00cm]{geometry}
+\usepackage{setspace}
+\usepackage{epsfig}
+\usepackage{tikz}
+\usetikzlibrary{arrows,backgrounds}
+\usepackage[unicode]{hyperref}
+\hypersetup{urlcolor=blue,linkcolor=black,citecolor=black,colorlinks=true} 
+%\usepackage{pstcol} 								% PSTricks with the standard color package
+% Table package
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+% Use case table
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand\tabularhead[2]{
+\begin{table}[ht]
+  \small
+%   \caption{<<#1>> use case description}
+  \begin{tabular}{|p{0.2\linewidth}|p{0.75\linewidth}|}
+    \hline 
+    \textbf{Name} & #1 \\
+    \hline
+    \textbf{Actor} & #2 \\
+    \hline}
+
+  \newcommand\addrow[2]{\textbf{#1} &#2\\ \hline}
+
+  \newcommand\addmulrow[2]{ \begin{minipage}[t][][t]{\linewidth}\textbf{#1}\end{minipage}% 
+     &\begin{minipage}[t][][t]{\linewidth}
+      \begin{enumerate}[wide=0pt] #2   \end{enumerate}
+      \smallskip
+      \end{minipage} \\ 
+      \hline }
+
+  \newenvironment{usecase}{\tabularhead}
+{\hline\end{tabular}\end{table}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\everymath{\color{blue}}
+\everydisplay{\color{blue}}
+\def\m@th{\normalcolor\mathsurround\z@}
+\usepackage{enumitem}
+\setlist[itemize]{noitemsep, topsep=0pt}
+\setlist[enumerate]{nosep}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\usepackage{fancyhdr}
+
+\setlength{\headheight}{40pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\linespread{1.2}
+\pagestyle{fancy}
+\fancyhead{} % clear all header fields
+\fancyhead[L]{
+ \begin{tabular}{rl}
+    \begin{picture}(25,15)(0,0)
+    \put(0,-8){\includegraphics[width=10mm, height=10mm]{hcmut.png}}
+    %\put(0,-8){\epsfig{width=10mm,figure=hcmut.eps}}
+   \end{picture}&
+	%\includegraphics[width=8mm, height=8mm]{hcmut.png} & %
+	\begin{tabular}{l}
+		\textbf{\bf \ttfamily Ho Chi Minh City University of Technology}\\
+		\textbf{\bf \ttfamily Faculty of Computer Science \& Engineering}
+	\end{tabular} 	
+ \end{tabular}
+}
+\fancyhead[R]{
+	\begin{tabular}{l}
+		\tiny \bf \\
+		\tiny \bf 
+	\end{tabular}  }
+\fancyfoot{} % clear all footer fields
+\fancyfoot[L]{\scriptsize \ttfamily Computer Network -  2020-2021}
+\fancyfoot[R]{\scriptsize \ttfamily Page {\thepage}/\pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0.3pt}
+\usepackage{datetime}
+\newdateformat{monthyeardate}{%
+  \monthname[\THEMONTH] \THEYEAR}
+
+%%%
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{3}
+\makeatletter
+\newcounter {subsubsubsection}[subsubsection]
+\renewcommand\thesubsubsubsection{\thesubsubsection .\@alph\c@subsubsubsection}
+\newcommand\subsubsubsection{\@startsection{subsubsubsection}{4}{\z@}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\normalfont\normalsize\bfseries}}
+\newcommand*\l@subsubsubsection{\@dottedtocline{3}{10.0em}{4.1em}}
+\newcommand*{\subsubsubsectionmark}[1]{}
+\makeatother
+
+%\usepackage[variablett]{lmodern}
+% \renewcommand{\rmdefault}{\ttdefault}
+% \usepackage[LGRgreek]{mathastext}
+% \MTgreekfont{lmtt} % no lgr lmvtt, so use lgr lmtt
+% \Mathastext
+% \let\varepsilon\epsilon % only \varsigma in LGR
+% \usepackage{everysel}
+% \renewcommand*\familydefault{cmtt}
+% \EverySelectfont{%
+% \fontdimen2\font=0.4em% interword space
+% \fontdimen3\font=0.2em% interword stretch
+% \fontdimen4\font=0.1em% interword shrink
+% \fontdimen7\font=0.1em% extra space
+% \hyphenchar\font=`\-% to allow hyphenation
+% }
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+VIETNAM NATIONAL UNIVERSITY - HO CHI MINH CITY \\
+UNIVERSITY OF TECHNOLOGY \\
+FACULTY OF COMPUTER SCIENCE \& ENGINEERING 
+\end{center}
+
+\vspace{1cm}
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=4cm]{hcmut.png}
+\end{center}
+\end{figure}
+
+\vspace{1cm}
+
+
+\begin{center}
+\begin{tabular}{c}
+\multicolumn{1}{l}{\textbf{{\Large Comouter Network}}}\\
+~~\\
+\hline
+\\
+\multicolumn{1}{l}{\textbf{{\Large Assignment 1}}}\\
+\\
+\textbf{{\Huge Resource control protocol}}\\
+\\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{1cm}
+
+\begin{table}[h]
+\begin{tabular}{rrll}
+\hspace{3 cm} & Instructor: & Assoc. Prof. Pham Tran Vu\\
+              &  & Assoc. Prof. Nguyen Hong Nam\\
+ & Student: & Nguyen Tran Quang Minh & - 1811083 \\
+ &          & Thai Van Nhat	& - 1813381 \\
+ &          & Van Chan Duong & - 1811824\\ 
+\\
+\vspace{2cm}
+\vspace{2cm}
+\end{tabular}
+\end{table}
+
+\begin{center}
+{\footnotesize HO CHI MINH CITY,  \monthyeardate\today}
+\end{center}
+\end{titlepage}
+
+
+%\thispagestyle{empty}
+
+\newpage
+\tableofcontents
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}   
