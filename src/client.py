@@ -2,6 +2,18 @@ import socket
 from datetime import datetime
 import ntplib
 import time
+import psutil
+import pickle
+import wmi
+
+
+"""
+Client's dependencies:
+    ntplib
+    psutil
+    wmi
+"""
+
 """
 The protocol:
 Client: 
@@ -11,32 +23,77 @@ Registering packet: "!REGISTER + info"
 
 
 // Considering using pickle on packing the data
+
+Client's sending data:
+	CPU temp, Disk drive's usage, RAM's usage
+        CPU temp: using WMI and OpenHardwareMonitor
+        Disk drive's usage: using psutil
+        RAM's usage: 
+    Header (indicating the length of the data is 16 bytes)
+    Length of the sending data is no longer than 240 bytes
 """
 
-
-HEADER = 64
+# VARIABLE DEFINITION
+HEADER = 16
 PORT = 34567
 FORMAT = 'utf-8'
 DISCONNECT_MSG = "!DISCONNECT"
-# SERVER = "172.29.128.1"
-SERVER = "192.168.43.134"
+SERVER = "192.168.0.101"
 ADDR = (SERVER, PORT)
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(ADDR)
+# METHOD IMPLEMENTATION
+def getCPUTemp():
+    w = wmi.WMI(namespace="root\OpenHardwareMonitor")
+    temperature_infos = w.Sensor()
+    for sensor in temperature_infos:
+        if sensor.SensorType==u'Temperature':
+            if (sensor.Name == 'CPU Package'):
+                return f"{sensor.Name}'s temp: {sensor.Value}\n"
 
-# should use socket.send(send_length + message) instead of sending 2 times
+def getDiskUsage():
+    return f"disk % used: {psutil.disk_usage('/')[3]}\n"
+
+def getRAMUsage():
+    return f"memory % used: {psutil.virtual_memory()[2]}\n"
+
 def send(msg):
     message = msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
-    print(client.recv(2048).decode(FORMAT))
+    client.send(send_length + message)
+    print(client.recv(2048).decode(FORMAT))    
 
-send("Hello world!")
+#=====================================================
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDR)
+
+msg = getCPUTemp() + getDiskUsage() + getRAMUsage()
+send(msg)
+time.sleep(10)
+msg = getCPUTemp() + getDiskUsage() + getRAMUsage()
+send(msg)
+time.sleep(10)
+msg = getCPUTemp() + getDiskUsage() + getRAMUsage()
+send(msg)
+time.sleep(10)
 send(DISCONNECT_MSG)
+
+# should use socket.send(send_length + message) instead of sending 2 times
+# def send(msg):
+#     message = msg.encode(FORMAT)
+#     msg_length = len(message)
+#     send_length = str(msg_length).encode(FORMAT)
+#     send_length += b' ' * (HEADER - len(send_length))
+#     client.send(send_length)
+#     client.send(message)
+#     print(client.recv(2048).decode(FORMAT))
+
+
+
+# send("HELLO")
+# send(DISCONNECT_MSG)
 
 # def GetNTPDateTime(server):
 #     try:
