@@ -23,7 +23,7 @@ HEADER = 16
 CMD = 5
 PORT = 34567
 
-SERVER = "192.168.0.104" # Change the address whenever you want to test on your machine
+SERVER = "192.168.0.101" # Change the address whenever you want to test on your machine
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 REGISTER_MSG = "!RGTR"
