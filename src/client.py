@@ -42,7 +42,7 @@ Msg format:
 
 # VARIABLE DEFINITION
 HEADER = 16
-SERVER = "192.168.0.104" # change the address whenever you want to test on your machine
+SERVER = "192.168.0.101" # change the address whenever you want to test on your machine
 PORT = 34567 # to send the register info
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
