@@ -1,4 +1,5 @@
 # -*- coding: future_fstrings -*-
+# above line fix fstring error from python3.5
 import socket
 import ntplib
 import time
@@ -6,6 +7,8 @@ import psutil
 import pickle
 import json
 from datetime import datetime
+import platform
+import wmi
 
 
 """
@@ -59,7 +62,15 @@ reg_succeeded = False
 
 # this is hardcoded (no good), will find ways to code it better afterward
 def get_CPU_temp():
-    return f"CPU temperature: {psutil.sensors_temperatures()['coretemp'][0].current}\n"
+    if (platform.system() == 'Linux'):
+        return f"CPU temperature: {psutil.sensors_temperatures()['cpu_thermal'][0].current}\n"
+    else:
+        w = wmi.WMI(namespace="root\OpenHardwareMonitor")
+        temperature_infos = w.Sensor()
+        for sensor in temperature_infos:
+            if sensor.SensorType==u'Temperature':
+                if (sensor.Name == 'CPU Package'):
+                    return f"{sensor.Name}'s temp: {sensor.Value}\n"
 
 def get_disk_usage():
     return f"disk % used: {psutil.disk_usage('/')[3]}\n"
