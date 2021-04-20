@@ -1,5 +1,6 @@
 # -*- coding: future_fstrings -*-
 # above line fix fstring error from python3.5
+from os import system
 import socket
 import ntplib
 import time
@@ -64,7 +65,7 @@ reg_succeeded = False
 def get_CPU_temp():
     if (platform.system() == 'Linux'):
         return f"CPU temperature: {psutil.sensors_temperatures()['cpu_thermal'][0].current}\n"
-    else:
+    if (platform.system() == 'Windows'):
         w = wmi.WMI(namespace="root\OpenHardwareMonitor")
         temperature_infos = w.Sensor()
         for sensor in temperature_infos:
