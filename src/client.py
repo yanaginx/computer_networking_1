@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 import socket
 import ntplib
 import time
