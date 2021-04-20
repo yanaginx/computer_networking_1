@@ -1,5 +1,5 @@
 # -*- coding: future_fstrings -*-
-# above line fix fstring error from python3.5
+#This line fix the fstring error from python 3.5, pls install future-fstrings packet
 from os import system
 import socket
 import ntplib
@@ -9,7 +9,7 @@ import pickle
 import json
 from datetime import datetime
 import platform
-import wmi
+
 
 
 """
@@ -66,6 +66,7 @@ def get_CPU_temp():
     if (platform.system() == 'Linux'):
         return f"CPU temperature: {psutil.sensors_temperatures()['cpu_thermal'][0].current}\n"
     if (platform.system() == 'Windows'):
+        import wmi
         w = wmi.WMI(namespace="root\OpenHardwareMonitor")
         temperature_infos = w.Sensor()
         for sensor in temperature_infos:
