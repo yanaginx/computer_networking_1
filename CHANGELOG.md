@@ -1,3 +1,9 @@
+## [0.0.4] - Apr 20th 2021
+### Added
+  -  A new branch that has only 1 client version (gonna try to update the server for more interaction with client maybe)
+### Updated
+  -  Fixed a small bug in client with Python 3.5, need to install future-fstring package.
+
 ## [0.0.3] - Apr 18th 2021
 ### Added
   - The protocol's definition
