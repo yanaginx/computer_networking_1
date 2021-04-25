@@ -11,6 +11,7 @@
         - Reply to registering packets:
             "!SUCC + [info]"
             or "!FAIL + [error]"
+        - When sending the change in interval time, if within 5s the server doesn't receive the received change message from the client then the server will resend the change.
 
 ### Clean disconnection:
     Sent the message "!DISC" to confirm clients' disconnection.        
@@ -19,14 +20,24 @@
     [msg's length] + [5 bytes command abbriviation] + [data]
 #### Registering packet: 
     "!RGTR + [info]"
-#### Info package packet: 
-    "!INFO + [info]"
-#### Disconnecting packet:
-    "!DISC"
 #### Succeeeded register confirmation packet:
     "!SUCC + [info]"
 #### Failed register confirmation packet:
     "!FAIL + [info]"
+#### Info package packet: 
+    "!INFO + [info]"
+#### Info package receive confirmation:
+    "!INFO: RECEIVED"
+
+#### Disconnecting packet:
+    "!DISC"
+#### Disconnection package receive confirmation:
+    "!DISC: RECEIVED"    
+
+#### Change message (server side)
+    "!UPDT + [change]"
+#### Change message confirmation (client will send this)
+    "!UDPT: RECEIVED"
 
 
 

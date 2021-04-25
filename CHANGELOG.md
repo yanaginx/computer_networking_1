@@ -1,3 +1,10 @@
+## [0.0.5] - Apr 25th 2021
+### Updated
+  - Updated the server, sending info to client when registration succeeded.
+  - Updated the client's functions, sending the info until keyboard interrupt (Ctrl + C).
+  - Updated the PROTOCOL (Adding more reply message on both ends).
+  - Used `client.py` file on Minh's branch.
+
 ## [0.0.4] - Apr 20th 2021
 ### Added
   -  A new branch that has only 1 client version (gonna try to update the server for more interaction with client maybe)
