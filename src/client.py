@@ -9,6 +9,7 @@ import json
 import ipaddress
 import platform
 import netifaces
+import threading
 
 
 
@@ -56,9 +57,10 @@ REGISTER_MSG = "!RGTR"
 INFO_MSG = "!INFO"
 SUCCEEDED_MSG = "!SUCC"
 FAILED_MSG = "!FAIL"
+UPDATE_MSG = "!UPDT"
 
 reg_succeeded = False
-packet_length = 256
+packet_length = 1024
 
 info = {}
 
@@ -166,9 +168,30 @@ def info_sending():
             print("DISCONNECTED!")
             break
 
+def update_listening():
+    global INTERVAL
+    while True:
+        try:
+            data, addr = client_recv.recvfrom(1024)
+            msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
+            if(msg_length):
+                msg_length = int(msg_length)
+                print(f"The length of the msg: {msg_length}")
+                cmd = data[HEADER:HEADER+CMD].decode(FORMAT)
+                print(f"The type of the msg: {cmd}")
+                msg = data[HEADER+CMD:].decode(FORMAT)
+                # need to check the validity
+                interval = int(msg)
+                INTERVAL = interval
+                print(f"INTERVAL changed to: {INTERVAL}")
+        except KeyboardInterrupt:
+            break
 
 if reg_succeeded:
-    info_sending()
+    thread_listening = threading.Thread(target=update_listening)
+    thread_sending = threading.Thread(target=info_sending)
+    thread_listening.start()
+    thread_sending.start()
 
 
 

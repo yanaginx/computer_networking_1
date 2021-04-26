@@ -20,6 +20,9 @@ import threading
 import json
 import netifaces
 from requests import get
+from datetime import datetime
+
+
 
 # Length of the field in the message
 HEADER = 16
@@ -29,11 +32,21 @@ CMD = 5
 TCP_PORT = 34567
 UDP_PORT = 45678
 
+
 # Getting the server's IP address dynamically
-iface = netifaces.gateways()['default'][netifaces.AF_INET][1]
-SERVER = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
+# iface = netifaces.gateways()['default'][netifaces.AF_INET][1]
+# SERVER = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
+SERVER = ""
+def findIP():
+    global SERVER
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    SERVER = s.getsockname()[0]
+    s.close()
+
+findIP()
 TCP_ADDR = (SERVER, TCP_PORT)
-UDP_ADDR = (SERVER, UDP_PORT)
+# UDP_ADDR = (SERVER, UDP_PORT)
 FORMAT = 'utf-8'
 
 REGISTER_MSG = "!RGTR"
@@ -41,8 +54,9 @@ DISCONNECT_MSG = "!DISC"
 SUCCEEDED_MSG = "!SUCC"
 FAILED_MSG = "!FAIL"
 INFO_MSG = "!INFO"
+UPDATE_MSG = "!UPDT"
 
-packet_length = 256
+packet_length = 1024
 no_of_connection = 0
 
 client_info = {}
@@ -54,7 +68,7 @@ server_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 # binding server to the address
 server_tcp.bind(TCP_ADDR)
-server_udp.bind(UDP_ADDR)
+# server_udp.bind(UDP_ADDR)
 
 def handle_client(conn, addr):
     global no_of_connection
@@ -112,6 +126,9 @@ def handle_client(conn, addr):
             if cmd == INFO_MSG:
                 print(f"[{addr}] {msg}")
                 conn.send("!INFO: RECEIVED".encode(FORMAT))
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
+                print("Current Time =", current_time)
         
     conn.close()
 
@@ -144,11 +161,40 @@ def tcp_start():
         print(f"[ACTIVE CONNECTION] {no_of_connection}")
 
 def input_command():
+    global client_info
+    
     while True:
         command = input()
         if (command == "UPDATE"):
             # Currently testing for single client
-            pass;
+            number_of_client = len(client_info)
+            info = {}
+            # find client id 
+            while True:
+                client_id = input("Enter the client id: ")
+                # gotta handle the int key checker too
+                if (int(client_id) in client_info):
+                    info = client_info[int(client_id)]
+                    break
+                else:
+                    print("Client id not found, please try again!")
+            interval = 0
+            # get the desire interval
+            while True:
+                try:
+                    # Convert it into integer
+                    value = input("Enter the interval: ") 
+                    interval = int(value)
+                    break
+                except ValueError:
+                    print("Please enter an integer.")
+            # send the interval to the client
+            msg = (UPDATE_MSG + str(interval)).encode(FORMAT)
+            msg_length = len(msg)
+            send_length = str(msg_length).encode(FORMAT)
+            send_length += b' ' * (HEADER - len(send_length))
+            server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
+
         if (command == "FALSE"):
             break;
 
