@@ -1,3 +1,10 @@
+## [0.0.6] - Apr 26th 2021
+### Updated
+  - Updated the client's listening function, the client can now change his interval by listening to server's update message.
+  - Updated the way to get server's IP dynamically.
+  - The keyboard interrupt on client isn't working now since the listening command (recvfrom()) is blocking it.
+  - Update `README.md` with bunch of task lists.
+  
 ## [0.0.5] - Apr 25th 2021
 ### Updated
   - Updated the server, sending info to client when registration succeeded.
