@@ -10,6 +10,7 @@ import ipaddress
 import platform
 import netifaces
 import threading
+import subprocess
 
 
 
@@ -64,6 +65,8 @@ packet_length = 1024
 
 info = {}
 
+opened = False
+
 # METHOD IMPLEMENTATION
 # Getting server's ip address through input (since we find the ip address of dynamically)
 def ipEntered():
@@ -76,10 +79,16 @@ def ipEntered():
 
 # this is hardcoded (no good), will find ways to code it better afterward
 def get_CPU_temp():
+    global opened
+
     if (platform.system() == 'Linux'):
         return f"CPU temperature: {psutil.sensors_temperatures()['cpu_thermal'][0].current}\n"
     if (platform.system() == 'Windows'):
         import wmi
+        if not opened:
+            subprocess.Popen('OpenHardwareMonitor.exe', shell=True)
+            time.sleep(5)
+            opened = True
         w = wmi.WMI(namespace="root\OpenHardwareMonitor")
         temperature_infos = w.Sensor()
         for sensor in temperature_infos:
@@ -141,8 +150,14 @@ client_send.connect(ADDR)
 # Receiving
 client_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client_name = socket.gethostname()
-iface = netifaces.gateways()['default'][netifaces.AF_INET][1]
-ip_addr = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
+ip_addr = ""
+def findIP():
+    global ip_addr
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    ip_addr = s.getsockname()[0]
+    s.close()
+findIP()
 client_recv.bind((ip_addr, 0))
 udp_port = client_recv.getsockname()[1]
 

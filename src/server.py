@@ -75,6 +75,7 @@ def handle_client(conn, addr):
     global packet_length
     global client_info
     global default_interval
+    global client_id
 
     print(f"[NEW CONNECTION] {addr} connected.")
 
@@ -102,12 +103,13 @@ def handle_client(conn, addr):
                 print(type(info))
 
                 # Adding new client info
-                client_info[client_id] = info
-                print(client_info[client_id]["name"])
-                print(client_info[client_id]["ip"])
-                print(client_info[client_id]["UDP_port"])
-                print(client_info[client_id]["time"])
-                client_info[client_id]["interval"] = default_interval
+                key = str(client_id)
+                client_info[key] = info
+                print(client_info[key]["name"])
+                print(client_info[key]["ip"])
+                print(client_info[key]["UDP_port"])
+                print(client_info[key]["time"])
+                client_info[key]["interval"] = default_interval
 
                 server_info = {
                     "client_id" : client_id,
@@ -122,6 +124,9 @@ def handle_client(conn, addr):
                 send_length = str(msg_length).encode(FORMAT)
                 send_length += b' ' * (HEADER - len(send_length))
                 conn.send(send_length + message)
+                
+                # increase the client id
+                client_id += 1
 
             if cmd == INFO_MSG:
                 print(f"[{addr}] {msg}")
@@ -163,21 +168,24 @@ def tcp_start():
 def input_command():
     global client_info
     
+    info = {}
+    client_id = ""
     while True:
         command = input()
         if (command == "UPDATE"):
             # Currently testing for single client
-            number_of_client = len(client_info)
-            info = {}
+            number_of_client = len(client_info)        
             # find client id 
             while True:
                 client_id = input("Enter the client id: ")
                 # gotta handle the int key checker too
-                if (int(client_id) in client_info):
-                    info = client_info[int(client_id)]
+                if (client_id in client_info):
+                    info = client_info[client_id]
+                    print(info)
                     break
                 else:
                     print("Client id not found, please try again!")
+
             interval = 0
             # get the desire interval
             while True:
@@ -194,7 +202,8 @@ def input_command():
             send_length = str(msg_length).encode(FORMAT)
             send_length += b' ' * (HEADER - len(send_length))
             server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
-
+            client_info[client_id]["interval"] = interval
+            
         if (command == "FALSE"):
             break;
 
