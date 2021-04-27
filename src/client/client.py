@@ -81,6 +81,8 @@ def ipEntered():
 def get_CPU_temp():
     global opened
 
+    if (platform.system() == 'Darwin'):
+        return "A temperature value"
     if (platform.system() == 'Linux'):
         return f"CPU temperature: {psutil.sensors_temperatures()['cpu_thermal'][0].current}\n"
     if (platform.system() == 'Windows'):
