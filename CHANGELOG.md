@@ -1,3 +1,8 @@
+## [0.0.7] - Apr 27th 2021
+### Updated
+  - Updated `README.md` for task lists progress, not so well tbh.
+### Added
+  - The OpenHardwareMonitor's bundles to somehow get the CPU's temperature.
 ## [0.0.6] - Apr 26th 2021
 ### Updated
   - Updated the client's listening function, the client can now change his interval by listening to server's update message.
