@@ -1,6 +1,13 @@
+## [0.0.8] - Apr 27th 2021
+### Updated
+  - Updated client's temperature for MACOSX device
+  - Updated Task lists in `README.md` 
+  - Updated Protocol in `PROTOCOL.md` (Adding scenario and error handling cases) 
+    >Only prototype, will complete it later.
+    
 ## [0.0.7] - Apr 27th 2021
 ### Updated
-  - Updated `README.md` for task lists progress, not so well tbh.
+  - Updated `README.md` for task lists progress.
 ### Added
   - The OpenHardwareMonitor's bundles to somehow get the CPU's temperature.
 ## [0.0.6] - Apr 26th 2021
