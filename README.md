@@ -17,6 +17,7 @@ Assignment 1 of computer networking's implementation
     > Update: Somehow manage to change the inverval by sending UDP packet to the MACOSX device, gotta know what the cause is then.
 - ~~Change the interval time on client and track it~~ (Still only 1 client).
 - ERROR HANDLING!!!
+    > Some error have been handle, the details will be updated in `CHANGELOG.md`
 - Multiple clients handling on server.
 - Compile it into a independent program.
 - ~~Including Open Hardware Monitor when running the server.~~

@@ -1,3 +1,13 @@
+## [0.0.9] - Apr 27th 2021
+### Updated
+  - Updated client and server error handling:
+    - The client's disconnection: The user type `EXIT` command it will wait until the end of the `INTERVAL` time.
+    - The server's sudden disconnection: the client will be prompt to exit the program to make a new connection.
+    - Handling on server's confirmation sending on `!INFO` and `!RGTR`.
+  - Change the CPU's temperature to CPU's utilization on client.
+### Added
+  - A server reference on using `select()` (not yet tested).
+
 ## [0.0.8] - Apr 27th 2021
 ### Updated
   - Updated client's temperature for MACOSX device
