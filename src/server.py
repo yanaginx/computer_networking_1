@@ -80,9 +80,18 @@ def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
 
     connected = True
-
+    current_id = str(client_id)
+    
     while (connected):
-        raw_msg = conn.recv(packet_length)
+        raw_msg = ""
+        try: 
+            raw_msg = conn.recv(packet_length)
+        except:
+            print("Closing the connection...")
+            connected = False
+            no_of_connection -= 1
+            break
+
         msg_length = raw_msg[0:HEADER].decode(FORMAT) # first 16 bytes
         if msg_length:
             msg_length = int(msg_length)
@@ -123,19 +132,31 @@ def handle_client(conn, addr):
                 msg_length = len(message)
                 send_length = str(msg_length).encode(FORMAT)
                 send_length += b' ' * (HEADER - len(send_length))
-                conn.send(send_length + message)
+                try:
+                    conn.send(send_length + message)
+                except Exception as e:
+                    print(f"Execption when sending confirmation: {e}")
+                    break
                 
                 # increase the client id
                 client_id += 1
 
             if cmd == INFO_MSG:
                 print(f"[{addr}] {msg}")
-                conn.send("!INFO: RECEIVED".encode(FORMAT))
+                try: 
+                    conn.send("!INFO: RECEIVED".encode(FORMAT))
+                except Exception as e:
+                    print(f"Execption when sending confirmation: {e}")
+                    break
                 now = datetime.now()
                 current_time = now.strftime("%H:%M:%S")
-                print("Current Time =", current_time)
+                print(f"Current Time = {current_time}\n")
         
     conn.close()
+    client_info.pop(current_id, None)
+    # print current client_info
+    print(client_info)
+    print("Connection closed")
 
 # def handle_client(conn, addr):
 #     print(f"[NEW CONNECTION] {addr} connected.")
@@ -168,9 +189,9 @@ def tcp_start():
 def input_command():
     global client_info
     
-    info = {}
-    client_id = ""
     while True:
+        info = None
+        client_id = ""
         command = input()
         if (command == "UPDATE"):
             # Currently testing for single client
@@ -178,6 +199,8 @@ def input_command():
             # find client id 
             while True:
                 client_id = input("Enter the client id: ")
+                if (client_id == 'cancel'):
+                    break
                 # gotta handle the int key checker too
                 if (client_id in client_info):
                     info = client_info[client_id]
@@ -185,26 +208,29 @@ def input_command():
                     break
                 else:
                     print("Client id not found, please try again!")
-
-            interval = 0
-            # get the desire interval
-            while True:
-                try:
-                    # Convert it into integer
-                    value = input("Enter the interval: ") 
-                    interval = int(value)
-                    break
-                except ValueError:
-                    print("Please enter an integer.")
-            # send the interval to the client
-            msg = (UPDATE_MSG + str(interval)).encode(FORMAT)
-            msg_length = len(msg)
-            send_length = str(msg_length).encode(FORMAT)
-            send_length += b' ' * (HEADER - len(send_length))
-            server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
-            client_info[client_id]["interval"] = interval
+            if (info):
+                interval = 0
+                # get the desire interval
+                while True:
+                    try:
+                        # Convert it into integer
+                        value = input("Enter the interval: ") 
+                        if (value == 'cancel'):
+                            break
+                        interval = int(value)
+                        break
+                    except ValueError:
+                        print("Please enter an integer.")
+                # send the interval to the client
+                if not value == 'cancel':
+                    msg = (UPDATE_MSG + str(interval)).encode(FORMAT)
+                    msg_length = len(msg)
+                    send_length = str(msg_length).encode(FORMAT)
+                    send_length += b' ' * (HEADER - len(send_length))
+                    server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
+                    client_info[client_id]["interval"] = interval
             
-        if (command == "FALSE"):
+        if (command == "CLOSE"):
             break;
 
         

@@ -8,9 +8,10 @@ import pickle
 import json
 import ipaddress
 import platform
-import netifaces
+# import netifaces
 import threading
-import subprocess
+# import subprocess
+import sys
 
 
 
@@ -61,6 +62,8 @@ FAILED_MSG = "!FAIL"
 UPDATE_MSG = "!UPDT"
 
 reg_succeeded = False
+exiting = False
+server_unavailable = False
 packet_length = 1024
 
 info = {}
@@ -98,22 +101,33 @@ def get_CPU_temp():
                 if (sensor.Name == 'CPU Package'):
                     return f"{sensor.Name}'s temp: {sensor.Value}\n"
 
+def get_cpu_percent():
+    return f"Average CPU % used: {psutil.cpu_percent()}\n"
+
 def get_disk_usage():
-    return f"disk % used: {psutil.disk_usage('/')[3]}\n"
+    return f"Storage % used: {psutil.disk_usage('/')[3]}\n"
 
 def get_RAM_usage():
-    return f"memory % used: {psutil.virtual_memory()[2]}\n"
+    return f"Memory % used: {psutil.virtual_memory()[2]}\n"
 
 def send(cmd, msg):
     global reg_succeeded
     global INTERVAL
     global info 
+    global exiting
+    global server_unavailable
 
     message = (cmd + msg).encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
-    client_send.send(send_length + message)
+    try:
+        client_send.send(send_length + message)
+    except:
+        print(f"Cannot send msg to server. Type EXIT to end the program")
+        server_unavailable = True
+        return
+
     if cmd == REGISTER_MSG:
         raw_msg = client_send.recv(packet_length)
         msg_length = raw_msg[0:HEADER].decode(FORMAT) # first 16 bytes
@@ -132,9 +146,11 @@ def send(cmd, msg):
                 reg_succeeded = True
 
     if cmd == INFO_MSG and reg_succeeded:
+        # Handle this later
         print(client_send.recv(packet_length).decode(FORMAT))
 
     if cmd == DISCONNECT_MSG and reg_succeeded:
+        # Handle this later
         print(client_send.recv(packet_length).decode(FORMAT))
 
         
@@ -147,11 +163,18 @@ ADDR = (SERVER, TCP_PORT)
 
 # Sending 
 client_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_send.connect(ADDR)
+try:
+    client_send.connect(ADDR)
+except Exception as e:
+    print(e)
+    print("Can't connect to server. Exiting...")
+    sys.exit()
+
 
 # Receiving
 client_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client_name = socket.gethostname()
+
 ip_addr = ""
 def findIP():
     global ip_addr
@@ -174,41 +197,57 @@ info_msg = json.dumps(info)
 send(REGISTER_MSG, info_msg)
 
 def info_sending():
-    while True:
-        try:
-            msg = get_CPU_temp() + get_disk_usage() + get_RAM_usage()
-            send(INFO_MSG, msg)
-            time.sleep(INTERVAL)
-        except KeyboardInterrupt:
-            print("DISCONNECTING:")
-            send(DISCONNECT_MSG, "")
-            print("DISCONNECTED!")
-            break
+    global exiting
+
+    while not exiting:
+        msg = get_cpu_percent() + get_disk_usage() + get_RAM_usage()
+        send(INFO_MSG, msg)
+        time.sleep(INTERVAL)
 
 def update_listening():
     global INTERVAL
-    while True:
+    global exiting
+
+    while not exiting:
         try:
             data, addr = client_recv.recvfrom(1024)
-            msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
-            if(msg_length):
-                msg_length = int(msg_length)
-                print(f"The length of the msg: {msg_length}")
-                cmd = data[HEADER:HEADER+CMD].decode(FORMAT)
-                print(f"The type of the msg: {cmd}")
-                msg = data[HEADER+CMD:].decode(FORMAT)
-                # need to check the validity
-                interval = int(msg)
-                INTERVAL = interval
-                print(f"INTERVAL changed to: {INTERVAL}")
-        except KeyboardInterrupt:
+        except:
+            print("UDP port is now unavailable. Exiting...")
+            break
+        msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
+        if(msg_length):
+            msg_length = int(msg_length)
+            print(f"The length of the msg: {msg_length}")
+            cmd = data[HEADER:HEADER+CMD].decode(FORMAT)
+            print(f"The type of the msg: {cmd}")
+            msg = data[HEADER+CMD:].decode(FORMAT)
+            # need to check the validity
+            interval = int(msg)
+            INTERVAL = interval
+            print(f"INTERVAL changed to: {INTERVAL}")
+
+def input_command():
+    global exiting
+    global server_unavailable
+
+    while not exiting:
+        command = input()
+        if (command == "EXIT"):
+            exiting = True
+            client_recv.close()
+            if not server_unavailable:
+                print("DISCONNECTING:")
+                send(DISCONNECT_MSG, "")
+                print("DISCONNECTED!")
             break
 
 if reg_succeeded:
     thread_listening = threading.Thread(target=update_listening)
     thread_sending = threading.Thread(target=info_sending)
+    thread_command = threading.Thread(target=input_command)
     thread_listening.start()
     thread_sending.start()
+    thread_command.start()
 
 
 
