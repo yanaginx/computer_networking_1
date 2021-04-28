@@ -1,3 +1,9 @@
+## [0.0.10] - Apr 28th 2021
+### Updated
+  - Updated `client`'s id generator.
+  - Handling error on receiving confirmation from `server` (`!INFO`, `!RGTR` and `!DISC`).
+  - Remove `client` from `server`'s `client_info` dict when `client` disconnected.
+  - Update `server` handling on `json` format.
 ## [0.0.9] - Apr 27th 2021
 ### Updated
   - Updated client and server error handling:
