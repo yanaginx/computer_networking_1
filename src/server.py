@@ -18,7 +18,8 @@ Consider adding semaphore or mutex for the common database (storing senders' inf
 import socket
 import threading
 import json
-import netifaces
+# import netifaces
+import shortuuid
 from requests import get
 from datetime import datetime
 
@@ -80,14 +81,14 @@ def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
 
     connected = True
-    current_id = str(client_id)
+    current_id = shortuuid.uuid()
     
     while (connected):
         raw_msg = ""
         try: 
             raw_msg = conn.recv(packet_length)
         except:
-            print("Closing the connection...")
+            print("Client is not listenable. Closing the connection...")
             connected = False
             no_of_connection -= 1
             break
@@ -106,51 +107,62 @@ def handle_client(conn, addr):
             msg = raw_msg[HEADER+CMD:].decode(FORMAT)
             if cmd == REGISTER_MSG:
                 print(f"Message: {msg}")
-                info = json.loads(msg)
-
-                # can remove this later
-                print(type(info))
-
-                # Adding new client info
-                key = str(client_id)
-                client_info[key] = info
-                print(client_info[key]["name"])
-                print(client_info[key]["ip"])
-                print(client_info[key]["UDP_port"])
-                print(client_info[key]["time"])
-                client_info[key]["interval"] = default_interval
-
-                server_info = {
-                    "client_id" : client_id,
-                    "port" : TCP_PORT,
-                    "interval" : default_interval
-                }
-
-                msg = json.dumps(server_info)
-
-                message = (SUCCEEDED_MSG + msg).encode(FORMAT)
-                msg_length = len(message)
-                send_length = str(msg_length).encode(FORMAT)
-                send_length += b' ' * (HEADER - len(send_length))
                 try:
-                    conn.send(send_length + message)
-                except Exception as e:
-                    print(f"Execption when sending confirmation: {e}")
-                    break
+                    info = json.loads(msg)
+                    # can remove this later
+                    print(type(info))
+                    # Adding new client info
+                    client_info[current_id] = info
+                    print(client_info[current_id]["name"])
+                    print(client_info[current_id]["ip"])
+                    print(client_info[current_id]["UDP_port"])
+                    print(client_info[current_id]["time"])
+                    client_info[current_id]["interval"] = default_interval
+
+                    server_info = {
+                        "client_id" : current_id,
+                        "port" : TCP_PORT,
+                        "interval" : default_interval
+                    }
+
+                    msg = json.dumps(server_info)
+
+                    message = (SUCCEEDED_MSG + msg).encode(FORMAT)
+                    msg_length = len(message)
+                    send_length = str(msg_length).encode(FORMAT)
+                    send_length += b' ' * (HEADER - len(send_length))
+                    try:
+                        conn.send(send_length + message)
+                    except Exception as e:
+                        print(f"Execption when sending confirmation: {e}")
+                        break
+
+                except ValueError:
+                    print(f"Decoding JSON has failed. Prompting client the error")
+                    msg = "Wrong format"
+                    message = (FAILED_MSG + msg).encode(FORMAT)
+                    msg_length = len(message)
+                    send_length = str(msg_length).encode(FORMAT)
+                    send_length += b' ' * (HEADER - len(send_length))
+                    try:
+                        conn.send(send_length + message)
+                    except Exception as e:
+                        print(f"Execption when sending confirmation: {e}")
+                        break
+
                 
-                # increase the client id
-                client_id += 1
 
             if cmd == INFO_MSG:
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
+                print(f"ID: {current_id}")
+                print(f"Current Time = {current_time}")
                 print(f"[{addr}] {msg}")
                 try: 
                     conn.send("!INFO: RECEIVED".encode(FORMAT))
                 except Exception as e:
                     print(f"Execption when sending confirmation: {e}")
                     break
-                now = datetime.now()
-                current_time = now.strftime("%H:%M:%S")
-                print(f"Current Time = {current_time}\n")
         
     conn.close()
     client_info.pop(current_id, None)

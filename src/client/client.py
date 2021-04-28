@@ -129,30 +129,47 @@ def send(cmd, msg):
         return
 
     if cmd == REGISTER_MSG:
-        raw_msg = client_send.recv(packet_length)
-        msg_length = raw_msg[0:HEADER].decode(FORMAT) # first 16 bytes
-        if msg_length:
-            msg_length = int(msg_length)
-            print(f"The length of the msg: {msg_length}")
-            cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
-            print(f"The type of the msg: {cmd}")
-            if cmd == SUCCEEDED_MSG:
-                msg = raw_msg[HEADER+CMD:].decode(FORMAT)
-                info = json.loads(msg)
-                print(info["client_id"])
-                print(info["port"])
-                print(info["interval"])
-                INTERVAL = info["interval"]
-                reg_succeeded = True
+        try:
+            raw_msg = client_send.recv(packet_length)
+            msg_length = raw_msg[0:HEADER].decode(FORMAT) # first 16 bytes
+            if msg_length:
+                msg_length = int(msg_length)
+                print(f"The length of the msg: {msg_length}")
+                cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
+                print(f"The type of the msg: {cmd}")
+                if cmd == SUCCEEDED_MSG:
+                    msg = raw_msg[HEADER+CMD:].decode(FORMAT)
+                    info = json.loads(msg)
+                    print(info["client_id"])
+                    print(info["port"])
+                    print(info["interval"])
+                    INTERVAL = info["interval"]
+                    reg_succeeded = True
+        except:
+            print(f"Cannot listen from server. Type EXIT to end the program")
+            server_unavailable = True
+            return
 
     if cmd == INFO_MSG and reg_succeeded:
         # Handle this later
-        print(client_send.recv(packet_length).decode(FORMAT))
+        try:
+            confirmation = client_send.recv(packet_length).decode(FORMAT)
+            print(confirmation)
+        except: 
+            print(f"Cannot listen from server. Type EXIT to end the program")
+            server_unavailable = True
+            return
+            
 
     if cmd == DISCONNECT_MSG and reg_succeeded:
         # Handle this later
-        print(client_send.recv(packet_length).decode(FORMAT))
-
+        try:
+            confirmation = client_send.recv(packet_length).decode(FORMAT)
+            print(confirmation)
+        except: 
+            print(f"Cannot listen from server. Type EXIT to end the program")
+            server_unavailable = True
+            return
         
 
 #=====================================================
