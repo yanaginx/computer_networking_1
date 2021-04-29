@@ -10,7 +10,7 @@ import ipaddress
 import platform
 # import netifaces
 import threading
-# import subprocess
+import subprocess
 import sys
 
 
@@ -60,6 +60,7 @@ INFO_MSG = "!INFO"
 SUCCEEDED_MSG = "!SUCC"
 FAILED_MSG = "!FAIL"
 UPDATE_MSG = "!UPDT"
+SERVER=""
 
 reg_succeeded = False
 exiting = False
@@ -71,15 +72,13 @@ info = {}
 
 opened = False
 
+screen =""
+command =""
+command_signal = 0
+
 # METHOD IMPLEMENTATION
 # Getting server's ip address through input (since we find the ip address of dynamically)
-def ipEntered():
-    while True:
-        try:
-            val = input("Please enter the ip address of the server you wish to connect with: ")
-            return ipaddress.ip_address(val)
-        except ValueError:
-            print("Not a valid IP address")
+
 
 # this is hardcoded (no good), will find ways to code it better afterward
 def get_CPU_temp():
@@ -118,6 +117,7 @@ def send(cmd, msg):
     global exiting
     global server_unavailable
     global exit_confirmed
+    global screen
 
     message = (cmd + msg).encode(FORMAT)
     msg_length = len(message)
@@ -126,10 +126,10 @@ def send(cmd, msg):
     try:
         client_send.send(send_length + message)
     except:
-        print(f"Cannot send msg to server. Type EXIT to end the program")
+        screen += f"Cannot send msg to server. Type EXIT to end the program\n"
         server_unavailable = True
         return
-
+    print(cmd)
     if cmd == REGISTER_MSG:
         try:
             raw_msg = client_send.recv(packet_length)
@@ -137,23 +137,25 @@ def send(cmd, msg):
             if msg_length:
                 try:
                     msg_length = int(msg_length)
-                    print(f"The length of the msg: {msg_length}")
+                    screen += f"The length of the msg: {msg_length}\n"
                     cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
-                    print(f"The type of the msg: {cmd}")
+                    screen += f"The type of the msg: {cmd}\n"
                     if cmd == SUCCEEDED_MSG:
+                        
                         msg = raw_msg[HEADER+CMD:].decode(FORMAT)
                         info = json.loads(msg)
-                        print(info["client_id"])
-                        print(info["tcp_port"])
-                        print(info["interval"])
+                        screen += info["client_id"]+"\n"    
+                        screen += str(info["tcp_port"])+"\n"
+                        screen += str(info["interval"])+"\n"
                         INTERVAL = info["interval"]
                         reg_succeeded = True
+                        
                 except ValueError:
-                    print(f"The message length is not recognizable! Abort the message")
-                    reg_succeded = False
-        except Exception e:
-            print(e)
-            print(f"Cannot listen from server. Type EXIT to end the program")
+                    screen += f"The message length is not recognizable! Abort the message\n"
+                    reg_succeeded = False
+        except Exception as e:
+            screen += str(e)
+            screen += f"Cannot listen from server. Type EXIT to end the program\n"
             server_unavailable = True
             return
 
@@ -161,9 +163,9 @@ def send(cmd, msg):
         # Handle this later
         try:
             confirmation = client_send.recv(packet_length).decode(FORMAT)
-            print(confirmation)
+            screen += confirmation +"\n"
         except: 
-            print(f"Cannot listen from server. Type EXIT to end the program")
+            screen += f"Cannot listen from server. Type EXIT to end the program\n"
             server_unavailable = True
             return
             
@@ -173,55 +175,68 @@ def send(cmd, msg):
         try:
             confirmation = client_send.recv(packet_length).decode(FORMAT)
             exit_confirmed = True
-            print(confirmation)
+            screen += confirmation +"\n"
         except: 
-            print(f"Cannot listen from server. Type EXIT to end the program")
+            screen += f"Cannot listen from server. Type EXIT to end the program\n"
             server_unavailable = True
             return
+
+def client_start():    
+    global client_send  
+    global client_recv
+    global client_name
+    global screen
+    global SERVER
+    global ADDR
+    global reg_succeeded
+    #=====================================================
+
+    TCP_PORT = 34567 # to send the register info
+    ADDR = (SERVER, TCP_PORT)
+
+    # Sending 
+    client_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        client_send.connect(ADDR)
+    except Exception as e:
+        screen += str(e)
+        screen += "Can't connect to server. Exiting...\n"
+        sys.exit()
+
+
+    # Receiving
+    client_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client_name = socket.gethostname()
+
+    ip_addr = ""
+    def findIP():
+        global ip_addr
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip_addr = s.getsockname()[0]
+        s.close()
+    findIP()
+    client_recv.bind((ip_addr, 0))
+    udp_port = client_recv.getsockname()[1]
+
+    info = {
+        "name" : client_name,
+        "ip" : ip_addr,
+        "UDP_port" : udp_port,
+        "time" : datetime.now().strftime("%H:%M:%S")
+    }
+    
+    info_msg = json.dumps(info)
+    while not reg_succeeded:
+        send(REGISTER_MSG, info_msg)
         
-
-#=====================================================
-
-SERVER = str(ipEntered())
-TCP_PORT = 34567 # to send the register info
-ADDR = (SERVER, TCP_PORT)
-
-# Sending 
-client_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-try:
-    client_send.connect(ADDR)
-except Exception as e:
-    print(e)
-    print("Can't connect to server. Exiting...")
-    sys.exit()
-
-
-# Receiving
-client_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-client_name = socket.gethostname()
-
-ip_addr = ""
-def findIP():
-    global ip_addr
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 80))
-    ip_addr = s.getsockname()[0]
-    s.close()
-findIP()
-client_recv.bind((ip_addr, 0))
-udp_port = client_recv.getsockname()[1]
-
-info = {
-    "name" : client_name,
-    "ip" : ip_addr,
-    "UDP_port" : udp_port,
-    "time" : datetime.now().strftime("%H:%M:%S")
-}
-
-info_msg = json.dumps(info)
-while not reg_succeeded:
-    send(REGISTER_MSG, info_msg)
-
+    if reg_succeeded:
+        thread_listening = threading.Thread(target=update_listening)
+        thread_sending = threading.Thread(target=info_sending)
+        thread_command = threading.Thread(target=input_command)
+        thread_listening.start()
+        thread_sending.start()
+        thread_command.start()
 def info_sending():
     global exiting
 
@@ -252,6 +267,7 @@ def update_listening():
             print("UDP port is now unavailable. Exiting...")
             break
         msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
+        print(data)
         if(msg_length):
             try:
                 msg_length = int(msg_length)
@@ -283,9 +299,11 @@ def input_command():
             if not server_unavailable:
                 print("DISCONNECTING:")
                 send(DISCONNECT_MSG, "")
-                if (exit_confirmed):
-                    print("DISCONNECTED!")
-                    break
+                t_end = time.time() + INTERVAL
+                while time.time() < t_end:
+                    if (exit_confirmed):
+                        print("DISCONNECTED!")
+                        return
 
 if reg_succeeded:
     thread_listening = threading.Thread(target=update_listening)

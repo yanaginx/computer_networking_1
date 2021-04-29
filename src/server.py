@@ -49,7 +49,6 @@ def findIP():
     SERVER = s.getsockname()[0]
     s.close()
 
-findIP()
 TCP_ADDR = (SERVER, TCP_PORT)
 UDP_ADDR = (SERVER, UDP_PORT)
 FORMAT = 'utf-8'
@@ -68,6 +67,15 @@ client_info = {}
 client_id = 0
 default_interval = 10
 current_system_pid = os.getpid()
+
+slot = ["","","",""]
+active_slot = [0,0,0,0]
+screen = ""
+screen_header = ""
+
+command =""
+command_signal = 0
+
 # family: internet. sending data with tcp protocol
 server_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # sending updates by udp ports
@@ -82,47 +90,57 @@ def handle_client(conn, addr):
     global client_info
     global default_interval
     global client_id
+    global screen_header
 
-    print(f"[NEW CONNECTION] {addr} connected.")
-
+    slot_id = 0
     connected = True
     current_id = shortuuid.uuid()
-    
+
+    header = f"[NEW CONNECTION] {addr} connected.\n"
+    timestart = time.time()
+    for i in active_slot:
+        if not i:
+            active_slot[slot_id] = 1
+        slot_id=(slot_id+1)%4
+    slot[slot_id] = header
     while (connected):
         raw_msg = ""
         try: 
             raw_msg = conn.recv(packet_length)
         except:
-            print("Client is not listenable. Closing the connection...")
+            slot[slot_id]+="Client is not listenable. Closing the connection..."
             connected = False
+            active_slot[slot_id] = 0
             no_of_connection -= 1
             break
 
         msg_length = raw_msg[0:HEADER].decode(FORMAT) # first 16 bytes
         if msg_length:
+            slot[slot_id] = header
             try:
                 msg_length = int(msg_length)
-                print(f"The length of the msg: {msg_length}")
+                slot[slot_id]+=f"The length of the msg: {msg_length}\n"
                 cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
-                print(f"The type of the msg: {cmd}")
+                slot[slot_id]+=f"The type of the msg: {cmd}\n"
                 if cmd == DISCONNECT_MSG:
                     conn.send("!DISC: RECEIVED".encode(FORMAT))
                     connected = False
+                    active_slot[slot_id] = 0
                     no_of_connection -= 1
 
                 msg = raw_msg[HEADER+CMD:].decode(FORMAT)
                 if cmd == REGISTER_MSG:
-                    print(f"Message: {msg}")
+                    slot[slot_id]+=f"Message: {msg}\n"
                     try:
                         info = json.loads(msg)
                         # can remove this later
-                        print(type(info))
+                        slot[slot_id]+=str(type(info))+"\n"
                         # Adding new client info
                         client_info[current_id] = info
-                        print(client_info[current_id]["name"])
-                        print(client_info[current_id]["ip"])
-                        print(client_info[current_id]["UDP_port"])
-                        print(client_info[current_id]["time"])
+                        slot[slot_id]+=client_info[current_id]["name"]+"\n"
+                        slot[slot_id]+=client_info[current_id]["ip"]+"\n"
+                        slot[slot_id]+=str(client_info[current_id]["UDP_port"])+"\n"
+                        slot[slot_id]+=client_info[current_id]["time"]+"\n"
                         client_info[current_id]["interval"] = default_interval
 
                         server_info = {
@@ -140,7 +158,7 @@ def handle_client(conn, addr):
                         try:
                             conn.send(send_length + message)
                         except Exception as e:
-                            print(f"Execption when sending confirmation: {e}")
+                            slot[slot_id]+=f"Exception when sending confirmation: {e}\n"
                             break
 
                     except ValueError:
@@ -153,29 +171,34 @@ def handle_client(conn, addr):
                         try:
                             conn.send(send_length + message)
                         except Exception as e:
-                            print(f"Execption when sending confirmation: {e}")
+                            slot[slot_id]+=f"Exception when sending confirmation: {e}\n"
                             break                   
 
                 if cmd == INFO_MSG:
                     now = datetime.now()
                     current_time = now.strftime("%H:%M:%S")
-                    print(f"ID: {current_id}")
-                    print(f"Current Time = {current_time}")
-                    print(f"[{addr}] {msg}")
+                    slot[slot_id]+=f"ID: {current_id}\n"
+                    slot[slot_id]+=f"Current Time = {current_time}\n"
+                    slot[slot_id]+=f"[{addr}] {msg}\n"
                     try: 
                         conn.send("!INFO: RECEIVED".encode(FORMAT))
                     except Exception as e:
-                        print(f"Execption when sending confirmation: {e}")
+                        slot[slot_id]+=f"ExCeption when sending confirmation: {e}\n"
                         break
 
             except ValueError:
-                print(f"The message length is not recognizable! Abort the message")     
-        
+                slot[slot_id]+=f"The message length is not recognizable! Abort the message\n"     
+            slot[slot_id]+=f"Time elapsed: {time.time()-timestart}\n"
+        slot[slot_id]+=f"[{slot_id}] slot [{len(slot[slot_id])}]\n"  
     conn.close()
     client_info.pop(current_id, None)
+    active_slot[slot_id] = 0
     # print current client_info
-    print(client_info)
-    print("Connection closed")
+    slot[slot_id]=str(client_info)+"\n"
+    slot[slot_id]+="Connection closed\n"
+
+    screen_header=f"[LISTENING] Server is listening on {SERVER}\n" + f"[ACTIVE CONNECTION] {no_of_connection}\n"
+
 
 # def handle_client(conn, addr):
 #     print(f"[NEW CONNECTION] {addr} connected.")
@@ -196,73 +219,86 @@ def handle_client(conn, addr):
 
 def tcp_start():
     global no_of_connection
+    global screen_header
+    global screen
     server_tcp.listen()
-    print(f"[LISTENING] Server is listening on {SERVER}")
+    screen_header=f"[LISTENING] Server is listening on {SERVER}\n" + f"[ACTIVE CONNECTION] {no_of_connection}\n"
     while True:
+        screen_header=f"[LISTENING] Server is listening on {SERVER}\n" + f"[ACTIVE CONNECTION] {no_of_connection}\n"
         conn, addr = server_tcp.accept()
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         no_of_connection += 1
         thread.start()
-        print(f"[ACTIVE CONNECTION] {no_of_connection}")
 
 def input_command():
     global client_info
-    
+    global command_signal
+    global command
+    global screen
+    global screen_header
     while True:
         info = None
         client_id = ""
-        command = input()
-        if (command == "UPDATE"):
-            # Currently testing for single client
-            number_of_client = len(client_info)        
-            # find client id 
-            while True:
-                client_id = input("Enter the client id: ")
-                if (client_id == 'cancel'):
-                    break
-                # gotta handle the int key checker too
-                if (client_id in client_info):
-                    info = client_info[client_id]
-                    print(info)
-                    break
-                else:
-                    print("Client id not found, please try again!")
-            if (info):
-                interval = 0
-                # get the desire interval
+        screen = screen_header
+        if command_signal:
+            command_signal = 0
+            if (command == "UPDATE"):
+                # Currently testing for single client
+                number_of_client = len(client_info)        
+                # find client id s
                 while True:
-                    try:
-                        # Convert it into integer
-                        value = input("Enter the interval: ") 
-                        if (value == 'cancel'):
+                    screen = screen_header + "Enter the client id: "
+                    if command_signal:
+                        command_signal = 0
+                        if (command == 'cancel'):
                             break
-                        interval = int(value)
-                        break
-                    except ValueError:
-                        print("Please enter an integer.")
-                # send the interval to the client
-                if not value == 'cancel':
-                    msg = (UPDATE_MSG + str(interval)).encode(FORMAT)
-                    msg_length = len(msg)
-                    send_length = str(msg_length).encode(FORMAT)
-                    send_length += b' ' * (HEADER - len(send_length))
-                    t_end = time.time() + 10
-                    # while time.time() < t_end:
-                    server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
-                        # if receive the message then break
+                        # gotta handle the int key checker too
+                        if (command in client_info):
+                            info = client_info[command]
+                            screen += str(info)
+                            break
+                        else:
+                            screen += "Client id not found, please try again: "
+                if (info):
+                    interval = 0
+                    # get the desire interval
+                    while True:
+                        screen = screen_header + "Enter the interval: \n"
+                        if command_signal:
+                            command_signal = 0
+                            if (command == 'cancel'):
+                                break
+                            try:
+                                interval = int(command)
+                                print(interval)
+                                break
+                            except ValueError:
+                                screen = screen_header + "Please enter an integer. \n"
+                            # send the interval to the client
+                            if not command == 'cancel':
+                                msg = (UPDATE_MSG + str(interval)).encode(FORMAT)
+                                msg_length = len(msg)
+                                send_length = str(msg_length).encode(FORMAT)
+                                send_length += b' ' * (HEADER - len(send_length))
+                                t_end = time.time() + 10
+                                # while time.time() < t_end:
+                                server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
+                                    # if receive the message then break
 
-                    client_info[client_id]["interval"] = interval
-            
-        if (command == "CLOSE"):
-            print("Closing the server...")
-            ThisSystem = psutil.Process(current_system_pid)
-            ThisSystem.terminate()
-            break;
+                                client_info[client_id]["interval"] = interval
+                
+            if (command == "CLOSE"):
+                screen += screen_header + "Closing the server...\n"
+                ThisSystem = psutil.Process(current_system_pid)
+                ThisSystem.terminate()
+                break;
 
-        
+def server_start():  
+    global screen_header   
+    findIP()
+    screen_header = "[STARTING] Server is starting...\n"
+    thread_listening = threading.Thread(target=tcp_start)
+    thread_input = threading.Thread(target=input_command)
+    thread_listening.start()
+    thread_input.start()
 
-print("[STARTING] Server is starting...")
-thread_listening = threading.Thread(target=tcp_start)
-thread_input = threading.Thread(target=input_command)
-thread_listening.start()
-thread_input.start()
