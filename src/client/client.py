@@ -63,6 +63,7 @@ UPDATE_MSG = "!UPDT"
 
 reg_succeeded = False
 exiting = False
+exit_confirmed = False
 server_unavailable = False
 packet_length = 1024
 
@@ -116,6 +117,7 @@ def send(cmd, msg):
     global info 
     global exiting
     global server_unavailable
+    global exit_confirmed
 
     message = (cmd + msg).encode(FORMAT)
     msg_length = len(message)
@@ -133,19 +135,24 @@ def send(cmd, msg):
             raw_msg = client_send.recv(packet_length)
             msg_length = raw_msg[0:HEADER].decode(FORMAT) # first 16 bytes
             if msg_length:
-                msg_length = int(msg_length)
-                print(f"The length of the msg: {msg_length}")
-                cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
-                print(f"The type of the msg: {cmd}")
-                if cmd == SUCCEEDED_MSG:
-                    msg = raw_msg[HEADER+CMD:].decode(FORMAT)
-                    info = json.loads(msg)
-                    print(info["client_id"])
-                    print(info["port"])
-                    print(info["interval"])
-                    INTERVAL = info["interval"]
-                    reg_succeeded = True
-        except:
+                try:
+                    msg_length = int(msg_length)
+                    print(f"The length of the msg: {msg_length}")
+                    cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
+                    print(f"The type of the msg: {cmd}")
+                    if cmd == SUCCEEDED_MSG:
+                        msg = raw_msg[HEADER+CMD:].decode(FORMAT)
+                        info = json.loads(msg)
+                        print(info["client_id"])
+                        print(info["tcp_port"])
+                        print(info["interval"])
+                        INTERVAL = info["interval"]
+                        reg_succeeded = True
+                except ValueError:
+                    print(f"The message length is not recognizable! Abort the message")
+                    reg_succeded = False
+        except Exception e:
+            print(e)
             print(f"Cannot listen from server. Type EXIT to end the program")
             server_unavailable = True
             return
@@ -165,6 +172,7 @@ def send(cmd, msg):
         # Handle this later
         try:
             confirmation = client_send.recv(packet_length).decode(FORMAT)
+            exit_confirmed = True
             print(confirmation)
         except: 
             print(f"Cannot listen from server. Type EXIT to end the program")
@@ -211,15 +219,27 @@ info = {
 }
 
 info_msg = json.dumps(info)
-send(REGISTER_MSG, info_msg)
+while not reg_succeeded:
+    send(REGISTER_MSG, info_msg)
 
 def info_sending():
     global exiting
 
     while not exiting:
+        t_end = time.time() + INTERVAL
+        while time.time() < t_end:
+            if exiting:
+                return
+            # wait
         msg = get_cpu_percent() + get_disk_usage() + get_RAM_usage()
         send(INFO_MSG, msg)
-        time.sleep(INTERVAL)
+
+    # while not exiting:
+    #     msg = get_cpu_percent() + get_disk_usage() + get_RAM_usage()
+    #     send(INFO_MSG, msg)
+    #     time.sleep(INTERVAL)
+    
+        
 
 def update_listening():
     global INTERVAL
@@ -233,19 +253,27 @@ def update_listening():
             break
         msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
         if(msg_length):
-            msg_length = int(msg_length)
-            print(f"The length of the msg: {msg_length}")
-            cmd = data[HEADER:HEADER+CMD].decode(FORMAT)
-            print(f"The type of the msg: {cmd}")
-            msg = data[HEADER+CMD:].decode(FORMAT)
-            # need to check the validity
-            interval = int(msg)
-            INTERVAL = interval
-            print(f"INTERVAL changed to: {INTERVAL}")
+            try:
+                msg_length = int(msg_length)
+                print(f"The length of the msg: {msg_length}")
+                cmd = data[HEADER:HEADER+CMD].decode(FORMAT)
+                print(f"The type of the msg: {cmd}")
+                msg = data[HEADER+CMD:].decode(FORMAT)
+                # need to check the validity
+                try:
+                    interval = int(msg)
+                    INTERVAL = interval
+                    info["interval"] = INTERVAL
+                    print(f"INTERVAL changed to: {INTERVAL}")
+                except ValueError:
+                    print(f"The data is not integer") 
+            except ValueError:
+                print(f"The length is not recognizable! Abort the message.")
 
 def input_command():
     global exiting
     global server_unavailable
+    global exit_confirmed
 
     while not exiting:
         command = input()
@@ -255,8 +283,9 @@ def input_command():
             if not server_unavailable:
                 print("DISCONNECTING:")
                 send(DISCONNECT_MSG, "")
-                print("DISCONNECTED!")
-            break
+                if (exit_confirmed):
+                    print("DISCONNECTED!")
+                    break
 
 if reg_succeeded:
     thread_listening = threading.Thread(target=update_listening)

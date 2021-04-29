@@ -20,8 +20,12 @@ import threading
 import json
 # import netifaces
 import shortuuid
+import os
+import psutil
+import time
 from requests import get
 from datetime import datetime
+
 
 
 
@@ -47,7 +51,7 @@ def findIP():
 
 findIP()
 TCP_ADDR = (SERVER, TCP_PORT)
-# UDP_ADDR = (SERVER, UDP_PORT)
+UDP_ADDR = (SERVER, UDP_PORT)
 FORMAT = 'utf-8'
 
 REGISTER_MSG = "!RGTR"
@@ -63,6 +67,7 @@ no_of_connection = 0
 client_info = {}
 client_id = 0
 default_interval = 10
+current_system_pid = os.getpid()
 # family: internet. sending data with tcp protocol
 server_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # sending updates by udp ports
@@ -95,74 +100,76 @@ def handle_client(conn, addr):
 
         msg_length = raw_msg[0:HEADER].decode(FORMAT) # first 16 bytes
         if msg_length:
-            msg_length = int(msg_length)
-            print(f"The length of the msg: {msg_length}")
-            cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
-            print(f"The type of the msg: {cmd}")
-            if cmd == DISCONNECT_MSG:
-                conn.send("!DISC: RECEIVED".encode(FORMAT))
-                connected = False
-                no_of_connection -= 1
+            try:
+                msg_length = int(msg_length)
+                print(f"The length of the msg: {msg_length}")
+                cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
+                print(f"The type of the msg: {cmd}")
+                if cmd == DISCONNECT_MSG:
+                    conn.send("!DISC: RECEIVED".encode(FORMAT))
+                    connected = False
+                    no_of_connection -= 1
 
-            msg = raw_msg[HEADER+CMD:].decode(FORMAT)
-            if cmd == REGISTER_MSG:
-                print(f"Message: {msg}")
-                try:
-                    info = json.loads(msg)
-                    # can remove this later
-                    print(type(info))
-                    # Adding new client info
-                    client_info[current_id] = info
-                    print(client_info[current_id]["name"])
-                    print(client_info[current_id]["ip"])
-                    print(client_info[current_id]["UDP_port"])
-                    print(client_info[current_id]["time"])
-                    client_info[current_id]["interval"] = default_interval
-
-                    server_info = {
-                        "client_id" : current_id,
-                        "port" : TCP_PORT,
-                        "interval" : default_interval
-                    }
-
-                    msg = json.dumps(server_info)
-
-                    message = (SUCCEEDED_MSG + msg).encode(FORMAT)
-                    msg_length = len(message)
-                    send_length = str(msg_length).encode(FORMAT)
-                    send_length += b' ' * (HEADER - len(send_length))
+                msg = raw_msg[HEADER+CMD:].decode(FORMAT)
+                if cmd == REGISTER_MSG:
+                    print(f"Message: {msg}")
                     try:
-                        conn.send(send_length + message)
+                        info = json.loads(msg)
+                        # can remove this later
+                        print(type(info))
+                        # Adding new client info
+                        client_info[current_id] = info
+                        print(client_info[current_id]["name"])
+                        print(client_info[current_id]["ip"])
+                        print(client_info[current_id]["UDP_port"])
+                        print(client_info[current_id]["time"])
+                        client_info[current_id]["interval"] = default_interval
+
+                        server_info = {
+                            "client_id" : current_id,
+                            "tcp_port" : TCP_PORT,
+                            "interval" : default_interval
+                        }
+
+                        msg = json.dumps(server_info)
+
+                        message = (SUCCEEDED_MSG + msg).encode(FORMAT)
+                        msg_length = len(message)
+                        send_length = str(msg_length).encode(FORMAT)
+                        send_length += b' ' * (HEADER - len(send_length))
+                        try:
+                            conn.send(send_length + message)
+                        except Exception as e:
+                            print(f"Execption when sending confirmation: {e}")
+                            break
+
+                    except ValueError:
+                        print(f"Decoding JSON has failed. Prompting client the error")
+                        msg = "Wrong format"
+                        message = (FAILED_MSG + msg).encode(FORMAT)
+                        msg_length = len(message)
+                        send_length = str(msg_length).encode(FORMAT)
+                        send_length += b' ' * (HEADER - len(send_length))
+                        try:
+                            conn.send(send_length + message)
+                        except Exception as e:
+                            print(f"Execption when sending confirmation: {e}")
+                            break                   
+
+                if cmd == INFO_MSG:
+                    now = datetime.now()
+                    current_time = now.strftime("%H:%M:%S")
+                    print(f"ID: {current_id}")
+                    print(f"Current Time = {current_time}")
+                    print(f"[{addr}] {msg}")
+                    try: 
+                        conn.send("!INFO: RECEIVED".encode(FORMAT))
                     except Exception as e:
                         print(f"Execption when sending confirmation: {e}")
                         break
 
-                except ValueError:
-                    print(f"Decoding JSON has failed. Prompting client the error")
-                    msg = "Wrong format"
-                    message = (FAILED_MSG + msg).encode(FORMAT)
-                    msg_length = len(message)
-                    send_length = str(msg_length).encode(FORMAT)
-                    send_length += b' ' * (HEADER - len(send_length))
-                    try:
-                        conn.send(send_length + message)
-                    except Exception as e:
-                        print(f"Execption when sending confirmation: {e}")
-                        break
-
-                
-
-            if cmd == INFO_MSG:
-                now = datetime.now()
-                current_time = now.strftime("%H:%M:%S")
-                print(f"ID: {current_id}")
-                print(f"Current Time = {current_time}")
-                print(f"[{addr}] {msg}")
-                try: 
-                    conn.send("!INFO: RECEIVED".encode(FORMAT))
-                except Exception as e:
-                    print(f"Execption when sending confirmation: {e}")
-                    break
+            except ValueError:
+                print(f"The message length is not recognizable! Abort the message")     
         
     conn.close()
     client_info.pop(current_id, None)
@@ -239,10 +246,17 @@ def input_command():
                     msg_length = len(msg)
                     send_length = str(msg_length).encode(FORMAT)
                     send_length += b' ' * (HEADER - len(send_length))
+                    t_end = time.time() + 10
+                    # while time.time() < t_end:
                     server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
+                        # if receive the message then break
+
                     client_info[client_id]["interval"] = interval
             
         if (command == "CLOSE"):
+            print("Closing the server...")
+            ThisSystem = psutil.Process(current_system_pid)
+            ThisSystem.terminate()
             break;
 
         
