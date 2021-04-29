@@ -151,7 +151,7 @@ def send(cmd, msg):
                 except ValueError:
                     print(f"The message length is not recognizable! Abort the message")
                     reg_succeded = False
-        except Exception e:
+        except Exception as e:
             print(e)
             print(f"Cannot listen from server. Type EXIT to end the program")
             server_unavailable = True
@@ -283,9 +283,11 @@ def input_command():
             if not server_unavailable:
                 print("DISCONNECTING:")
                 send(DISCONNECT_MSG, "")
-                if (exit_confirmed):
-                    print("DISCONNECTED!")
-                    break
+                t_end = time.time() + INTERVAL
+                while time.time() < t_end:
+                    if (exit_confirmed):
+                        print("DISCONNECTED!")
+                        return
 
 if reg_succeeded:
     thread_listening = threading.Thread(target=update_listening)
