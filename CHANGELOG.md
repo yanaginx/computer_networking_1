@@ -1,3 +1,7 @@
+## [0.0.11] - Apr 29th 2021
+  - Updated `client`'s exit command, now we don't have to wait for the end of interval.
+  - Updated `server`'s error handlings.
+  - Updated `client`'s error handlings.
 ## [0.0.10] - Apr 28th 2021
 ### Updated
   - Updated `client`'s id generator.
