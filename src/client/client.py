@@ -129,7 +129,6 @@ def send(cmd, msg):
         screen += f"Cannot send msg to server. Type EXIT to end the program\n"
         server_unavailable = True
         return
-    print(cmd)
     if cmd == REGISTER_MSG:
         try:
             raw_msg = client_send.recv(packet_length)
@@ -305,66 +304,4 @@ def input_command():
                         print("DISCONNECTED!")
                         return
 
-if reg_succeeded:
-    thread_listening = threading.Thread(target=update_listening)
-    thread_sending = threading.Thread(target=info_sending)
-    thread_command = threading.Thread(target=input_command)
-    thread_listening.start()
-    thread_sending.start()
-    thread_command.start()
 
-
-
-
-# msg = get_CPU_temp() + get_disk_usage() + get_RAM_usage()
-# send(INFO_MSG, msg)
-# time.sleep(INTERVAL)
-# msg = get_CPU_temp() + get_disk_usage() + get_RAM_usage()
-# send(INFO_MSG, msg)
-# time.sleep(INTERVAL)
-# msg = get_CPU_temp() + get_disk_usage() + get_RAM_usage()
-# send(INFO_MSG, msg)
-# time.sleep(INTERVAL)
-# send(INFO_MSG, msg)
-# send(DISCONNECT_MSG, "")
-
-# should use socket.send(send_length + message) instead of sending 2 times
-# def send(msg):
-#     message = msg.encode(FORMAT)
-#     msg_length = len(message)
-#     send_length = str(msg_length).encode(FORMAT)
-#     send_length += b' ' * (HEADER - len(send_length))
-#     client.send(send_length)
-#     client.send(message)
-#     print(client.recv(2048).decode(FORMAT))
-
-
-
-# send("HELLO")
-# send(DISCONNECT_MSG)
-
-# def GetNTPDateTime(server):
-#     try:
-#         ntpDate = None
-#         client2 = ntplib.NTPClient()
-#         response = client2.request(server, version=3)
-#         ntpDate = time.ctime(response.tx_time)
-#         #print (ntpDate)
-#     except Exception as e:
-#         print (e)
-#     if(ntpDate != None):
-#         return datetime.strptime(ntpDate, "%a %b %d %H:%M:%S %Y")
-
-# print('iz gettin')
-# while True:
-#     a = GetNTPDateTime('uk.pool.ntp.org')
-#     if(a.hour == 10 and a.minute == 11 and a.second ==59):
-#         send("Hello world!")
-#         #input()
-#         send("Hello everyone!")
-#         #input()
-#         send("The pc said Hello!!!")
-#         #input()
-#         send("It's time to say goodbye :(")
-#         send(DISCONNECT_MSG)
-#         break;
