@@ -11,6 +11,7 @@ app = QApplication([])
 message = QLineEdit()
 layout = QVBoxLayout()
 
+
 text_area1 = QPlainTextEdit()
 text_area1.setFocusPolicy(Qt.ClickFocus)
 layout.addWidget(text_area1)
