@@ -14,16 +14,17 @@ Assignment 1 of computer networking's implementation
 - Update the interval time by sending udp packet        
     >(Only 2 clients on the same host is okay, but sending the udp packet through the subnet (aka sending it to another client in the subnet) seems not working)
     > Gotta finds way to fix this asap
-    > Update: Somehow manage to change the inverval by sending UDP packet to the MACOSX device, gotta know what the cause is then.
+    > Update: Somehow manage to change the inverval by sending UDP packet to the MACOSX device, gotta know what the cause is then. (M: really?? didn't know about that)
 - ~~Change the interval time on client and track it~~ (Still only 1 client).
 - ERROR HANDLING!!!
     > Some error have been handle, the details will be updated in `CHANGELOG.md`
-- Multiple clients handling on server.
-- Compile it into a independent program.
+- ~~Multiple clients handling on server.~~
+- ~~Compile it into a independent program.~~
 - ~~Including Open Hardware Monitor when running the server.~~
     > Such a burden to handle, not recommend using OpenHardwareMonitor anymore, gonna find another way
 - Find alternative ways to get temperature info without using Open Hardware Monitor.
     > Must do must do!
+    > Can't do T - T
 - Scenarios' definition.
-- (optional) GUI
-- Find ways to disconnect the client properly.
+- ~~(optional) GUI~~
+- ~~Find ways to disconnect the client properly.~~
