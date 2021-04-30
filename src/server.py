@@ -196,7 +196,7 @@ def handle_client(conn, addr):
     client_info.pop(current_id, None)
     active_slot[slot_id] = 0
     # print current client_info
-    slot[slot_id]=str(client_info)+"\n"
+    # slot[slot_id]=str(client_info)+"\n"
     slot[slot_id]+="Connection closed\n"
 
     screen_header=f"[LISTENING] Server is listening on {SERVER}\n" + f"[ACTIVE CONNECTION] {no_of_connection}\n"

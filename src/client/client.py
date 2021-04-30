@@ -134,6 +134,7 @@ def send(cmd, msg):
     global cmd_count
     global screen
     global confirm
+    global err
 
     message = (cmd + msg).encode(FORMAT)
     msg_length = len(message)
@@ -142,7 +143,7 @@ def send(cmd, msg):
     try:
         client_send.send(send_length + message)
     except:
-        screen += f"Cannot send msg to server. Type EXIT to end the program\n"
+        err= f"Cannot send msg to server. Type EXIT to end the program\n"
         server_unavailable = True
         return
     cmd_count[cmd]+=1
@@ -171,8 +172,7 @@ def send(cmd, msg):
                     screen += f"The message length is not recognizable! Abort the message\n"
                     reg_succeeded = False
         except Exception as e:
-            screen += str(e)
-            screen += f"Cannot listen from server. Type EXIT to end the program\n"
+            err = str(e) + "\n" +  f"Cannot register. Mayber wrong IP?\n"
             server_unavailable = True
             return
 
@@ -182,7 +182,7 @@ def send(cmd, msg):
             confirmation = client_send.recv(packet_length).decode(FORMAT)
             confirm = confirmation + f"Has been called {cmd_count[cmd]} time(s)\n"
         except: 
-            screen += f"Cannot listen from server. Type EXIT to end the program\n"
+            err = f"Cannot listen from server. Type EXIT to end the program\n"
             server_unavailable = True
             return
             
@@ -194,7 +194,7 @@ def send(cmd, msg):
             exit_confirmed = True
             screen += confirmation +"\n"
         except: 
-            screen += f"Cannot listen from server. Type EXIT to end the program\n"
+            err = f"Cannot listen from server. Type EXIT to end the program\n"
             server_unavailable = True
             return
 
@@ -211,6 +211,7 @@ def client_start():
     global client_recv
     global client_name
     global screen
+    global err
     global SERVER
     global ADDR
     global reg_succeeded
@@ -226,8 +227,7 @@ def client_start():
         try:
             client_send.connect(ADDR)
         except Exception as e:
-            screen += str(e)
-            screen += "Can't connect to server. Exiting...\n"
+            err = str(e)+ "\nCan't connect to server. Exiting...\n"
             sys.exit()
 
 
@@ -252,10 +252,12 @@ def client_start():
             if not server_unavailable:
                send(REGISTER_MSG, info_msg)
             else:
-                client_restart = 1
-                break       
+                break
+        if not reg_succeeded:
+            server_unavailable = False
+            client_restart = 1       
         if reg_succeeded:
-            
+            err = ""
             thread_listening = threading.Thread(target=update_listening)
             thread_sending = threading.Thread(target=info_sending)
             thread_command = threading.Thread(target=input_command)
@@ -289,12 +291,14 @@ def update_listening():
     global info
     global client_recv
     global screen
-
+    global err
+    global exit_confirmed
     while not exiting:
         try:
             data, addr = client_recv.recvfrom(1024)
         except:
-            screen= f"UDP port is now unavailable. Exiting...\n"
+            err = f"UDP port is now unavailable. Exiting...\n"
+            exit_confirmed = 1
             break
         msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
         # print(data)
@@ -312,9 +316,9 @@ def update_listening():
                     info["interval"] = INTERVAL
                     screen += f"INTERVAL changed to: {INTERVAL}\n"
                 except ValueError:
-                    screen += f"The data is not integer\n" 
+                    err = f"The data is not integer\n" 
             except ValueError:
-                screen += f"The length is not recognizable! Abort the message.\n"
+                err = f"The length is not recognizable! Abort the message.\n"
 
 def input_command():
     global exiting

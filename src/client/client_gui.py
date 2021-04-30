@@ -19,6 +19,10 @@ text_area = QPlainTextEdit()
 text_area.setFocusPolicy(Qt.ClickFocus)
 layout.addWidget(text_area)
 
+error_area = QPlainTextEdit()
+error_area.setFocusPolicy(Qt.ClickFocus)
+layout.addWidget(error_area)
+
 
 
 layout.addWidget(message)
@@ -32,14 +36,15 @@ window.show()
 
 def display_new_messages():
     global first
+    error_area.setPlainText(client.err)
     if first:
         text_area.clear()
-        text_area.setPlainText("Please input Server IP address: ")
+        text_area.setPlainText("Please input Server IP address: \n")
     else:
         text_area.clear()
         text_area.setPlainText(client.screen+client.confirm)
-        if (client.exit_confirmed):
-            app.exit()
+    if (client.exit_confirmed):
+        app.exit()
 
 
 
@@ -53,15 +58,16 @@ def send_message():
             client.SERVER=""
         if client.SERVER:
             ip=message.text()
-            print("This is ip connection" + client.SERVER)
+            # print("This is ip connection" + client.SERVER)
             client.client_start()
-            if (client.client_restart):
-                first = 1
-                client.client_restart = 0
-            else:
-                client.client_restart = 0
+        if client.client_restart:
+            first = 1
+            client.client_restart = 0
+        else :
+            if client.reg_succeeded:
+                # print("sadmlakskmd\n")
                 first = 0
-            message.clear()
+        message.clear()
 
     else:
         client.command = message.text()
