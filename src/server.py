@@ -165,7 +165,7 @@ def handle_client(conn, addr):
                             break
 
                     except ValueError:
-                        print(f"Decoding JSON has failed. Prompting client the error")
+                        slot[slot_id]+=f"Decoding JSON has failed. Prompting client the error\n"
                         msg = "Wrong format"
                         message = (FAILED_MSG + msg).encode(FORMAT)
                         msg_length = len(message)
@@ -192,7 +192,6 @@ def handle_client(conn, addr):
             except ValueError:
                 slot[slot_id]+=f"The message length is not recognizable! Abort the message\n"     
             slot[slot_id]+=f"Time elapsed: {time.time()-timestart}\n"
-        slot[slot_id]+=f"[{slot_id}] slot [{len(slot[slot_id])}]\n"  
     conn.close()
     client_info.pop(current_id, None)
     active_slot[slot_id] = 0

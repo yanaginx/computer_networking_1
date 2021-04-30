@@ -55,7 +55,12 @@ def send_message():
             ip=message.text()
             print("This is ip connection" + client.SERVER)
             client.client_start()
-            first = 0
+            if (client.client_restart):
+                first = 1
+                client.client_restart = 0
+            else:
+                client.client_restart = 0
+                first = 0
             message.clear()
 
     else:

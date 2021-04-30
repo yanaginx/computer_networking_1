@@ -68,6 +68,7 @@ exit_confirmed = False
 server_unavailable = False
 packet_length = 1024
 ip_addr = ""
+client_restart = 0
 
 info = {}
 
@@ -213,8 +214,10 @@ def client_start():
     global SERVER
     global ADDR
     global reg_succeeded
+    global server_unavailable
+    global client_restart
     #=====================================================
-    while SERVER:
+    if SERVER:
         TCP_PORT = 34567 # to send the register info
         ADDR = (SERVER, TCP_PORT)
         # print("This is SERVER: "+SERVER)
@@ -246,8 +249,11 @@ def client_start():
         
         info_msg = json.dumps(info)
         while not reg_succeeded:
-            send(REGISTER_MSG, info_msg)
-            
+            if not server_unavailable:
+               send(REGISTER_MSG, info_msg)
+            else:
+                client_restart = 1
+                break       
         if reg_succeeded:
             
             thread_listening = threading.Thread(target=update_listening)
