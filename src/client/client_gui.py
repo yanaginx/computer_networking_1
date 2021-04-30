@@ -30,7 +30,7 @@ window.show()
 
 def display_new_messages():
     text_area.clear()
-    text_area.setPlainText(client.screen)
+    text_area.setPlainText(client.screen+client.confirm)
 
 
 def send_message():
@@ -38,7 +38,7 @@ def send_message():
     client.command_signal = 1
     message.clear()
 
-client.SERVER ="192.168.0.102"
+client.SERVER ="192.168.43.79"
 client.client_start()
 message.returnPressed.connect(send_message)
 timer = QTimer()

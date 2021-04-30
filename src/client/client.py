@@ -75,6 +75,17 @@ opened = False
 screen =""
 command =""
 command_signal = 0
+confirm = ""
+
+cmd_count = {
+    DISCONNECT_MSG : 0,
+    REGISTER_MSG : 0,
+    INFO_MSG : 0,
+    SUCCEEDED_MSG : 0,
+    FAILED_MSG : 0,
+    UPDATE_MSG : 0,
+}
+
 
 # METHOD IMPLEMENTATION
 # Getting server's ip address through input (since we find the ip address of dynamically)
@@ -117,8 +128,10 @@ def send(cmd, msg):
     global exiting
     global server_unavailable
     global exit_confirmed
+    global cmd_count
     global screen
-
+    global confirm
+    
     message = (cmd + msg).encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
@@ -129,6 +142,7 @@ def send(cmd, msg):
         screen += f"Cannot send msg to server. Type EXIT to end the program\n"
         server_unavailable = True
         return
+    cmd_count[cmd]+=1
     if cmd == REGISTER_MSG:
         try:
             raw_msg = client_send.recv(packet_length)
@@ -138,7 +152,8 @@ def send(cmd, msg):
                     msg_length = int(msg_length)
                     screen += f"The length of the msg: {msg_length}\n"
                     cmd = raw_msg[HEADER:HEADER+CMD].decode(FORMAT)
-                    screen += f"The type of the msg: {cmd}\n"
+                    
+                    screen += f"The type of the msg: {cmd} \n"
                     if cmd == SUCCEEDED_MSG:
                         
                         msg = raw_msg[HEADER+CMD:].decode(FORMAT)
@@ -162,7 +177,7 @@ def send(cmd, msg):
         # Handle this later
         try:
             confirmation = client_send.recv(packet_length).decode(FORMAT)
-            screen += confirmation +"\n"
+            confirm = confirmation + f"Has been called {cmd_count[cmd]} time(s)\n"
         except: 
             screen += f"Cannot listen from server. Type EXIT to end the program\n"
             server_unavailable = True
@@ -263,45 +278,45 @@ def update_listening():
         try:
             data, addr = client_recv.recvfrom(1024)
         except:
-            print("UDP port is now unavailable. Exiting...")
+            screen+= f"UDP port is now unavailable. Exiting...\n"
             break
         msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
         print(data)
         if(msg_length):
             try:
                 msg_length = int(msg_length)
-                print(f"The length of the msg: {msg_length}")
+                screen += f"The length of the msg: {msg_length}"
                 cmd = data[HEADER:HEADER+CMD].decode(FORMAT)
-                print(f"The type of the msg: {cmd}")
+                screen += f"The type of the msg: {cmd}\n"
                 msg = data[HEADER+CMD:].decode(FORMAT)
                 # need to check the validity
                 try:
                     interval = int(msg)
                     INTERVAL = interval
                     info["interval"] = INTERVAL
-                    print(f"INTERVAL changed to: {INTERVAL}")
+                    screen += f"INTERVAL changed to: {INTERVAL}\n"
                 except ValueError:
-                    print(f"The data is not integer") 
+                    screen += f"The data is not integer\n" 
             except ValueError:
-                print(f"The length is not recognizable! Abort the message.")
+                screen += f"The length is not recognizable! Abort the message.\n"
 
 def input_command():
     global exiting
     global server_unavailable
     global exit_confirmed
-
+    global screen
     while not exiting:
         command = input()
         if (command == "EXIT"):
             exiting = True
             client_recv.close()
             if not server_unavailable:
-                print("DISCONNECTING:")
+                screen += "DISCONNECTING:\n"
                 send(DISCONNECT_MSG, "")
                 t_end = time.time() + INTERVAL
                 while time.time() < t_end:
                     if (exit_confirmed):
-                        print("DISCONNECTED!")
+                        screen += "DISCONNECTED!\n"
                         return
 
 
