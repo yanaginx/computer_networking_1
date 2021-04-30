@@ -38,6 +38,9 @@ def display_new_messages():
     else:
         text_area.clear()
         text_area.setPlainText(client.screen+client.confirm)
+        if (client.exit_confirmed):
+            app.exit()
+
 
 
 def send_message():

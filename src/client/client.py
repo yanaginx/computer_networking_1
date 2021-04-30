@@ -77,6 +77,7 @@ screen =""
 command =""
 command_signal = 0
 confirm = ""
+err =""
 
 cmd_count = {
     DISCONNECT_MSG : 0,
