@@ -280,7 +280,8 @@ def update_listening():
     global INTERVAL
     global exiting
     global info
-
+    global client_recv
+    global screen
 
     while not exiting:
         try:

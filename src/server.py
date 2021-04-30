@@ -277,18 +277,17 @@ def input_command():
                                 break
                             except ValueError:
                                 screen = screen_header + "Please enter an integer. \n"
-                            # send the interval to the client
-                            if not command == 'cancel':
-                                msg = (UPDATE_MSG + str(interval)).encode(FORMAT)
-                                msg_length = len(msg)
-                                send_length = str(msg_length).encode(FORMAT)
-                                send_length += b' ' * (HEADER - len(send_length))
-                                t_end = time.time() + 10
-                                # while time.time() < t_end:
-                                server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
-                                    # if receive the message then break
-
-                                client_info[client_id]["interval"] = interval
+                    # send the interval to the client
+                    if not command == 'cancel':
+                        msg = (UPDATE_MSG + str(interval)).encode(FORMAT)
+                        msg_length = len(msg)
+                        send_length = str(msg_length).encode(FORMAT)
+                        send_length += b' ' * (HEADER - len(send_length))
+                        t_end = time.time() + 10
+                        # while time.time() < t_end:
+                        server_udp.sendto(send_length + msg, (info["ip"], info["UDP_port"]))
+                            # if receive the message then break
+                        # client_info[client_id]["interval"] = interval
                 
             if (command == "CLOSE"):
                 screen += screen_header + "Closing the server...\n"
