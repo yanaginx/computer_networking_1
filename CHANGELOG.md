@@ -1,3 +1,8 @@
+## [0.0.13] - Apr 30th 2021
+### Updated
+  - Updated report
+  - Added GUI and compiled .exe files
+  - Fixed the threads-remain-on-close error
 ## [0.0.12] - Apr 29th 2021
 ### Updated
   - Updated report
