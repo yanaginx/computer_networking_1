@@ -77,6 +77,6 @@ def send_message():
 message.returnPressed.connect(send_message)
 timer = QTimer()
 timer.timeout.connect(display_new_messages)
-timer.start(1000)
+timer.start(200)
 app.exec_()
 

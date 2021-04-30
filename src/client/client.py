@@ -175,12 +175,13 @@ def send(cmd, msg):
             err = str(e) + "\n" +  f"Cannot register. Mayber wrong IP?\n"
             server_unavailable = True
             return
-
+    if reg_succeeded:
+        screen = "Client ID: "+str(info["client_id"])+"\n TCP Port: " + str(info["tcp_port"])+"\n Interval: " + str(info["interval"])+"\n"
     if cmd == INFO_MSG and reg_succeeded:
         # Handle this later
         try:
             confirmation = client_send.recv(packet_length).decode(FORMAT)
-            confirm = confirmation + f"Has been called {cmd_count[cmd]} time(s)\n"
+            confirm = confirmation + f" has been sent {cmd_count[cmd]} time(s)\n"
         except: 
             err = f"Cannot listen from server. Type EXIT to end the program\n"
             server_unavailable = True
@@ -314,7 +315,7 @@ def update_listening():
                     interval = int(msg)
                     INTERVAL = interval
                     info["interval"] = INTERVAL
-                    screen += f"INTERVAL changed to: {INTERVAL}\n"
+                    confirm += f"INTERVAL changed to: {INTERVAL}\n"
                 except ValueError:
                     err = f"The data is not integer\n" 
             except ValueError:

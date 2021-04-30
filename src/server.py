@@ -111,7 +111,7 @@ def handle_client(conn, addr):
         try: 
             raw_msg = conn.recv(packet_length)
         except:
-            slot[slot_id]+="Client is not listenable. Closing the connection..."
+            slot[slot_id]="Client is not listenable. Closing the connection..."
             connected = False
             active_slot[slot_id] = 0
             no_of_connection -= 1
@@ -180,13 +180,14 @@ def handle_client(conn, addr):
                 if cmd == INFO_MSG:
                     now = datetime.now()
                     current_time = now.strftime("%H:%M:%S")
+                    slot[slot_id]+="\n"
                     slot[slot_id]+=f"ID: {current_id}\n"
                     slot[slot_id]+=f"Current Time = {current_time}\n"
-                    slot[slot_id]+=f"[{addr}] {msg}\n"
+                    slot[slot_id]+=f"[{addr}] \n{msg}"
                     try: 
                         conn.send("!INFO: RECEIVED".encode(FORMAT))
                     except Exception as e:
-                        slot[slot_id]+=f"ExCeption when sending confirmation: {e}\n"
+                        slot[slot_id]+=f"Exception when sending confirmation: {e}\n"
                         break
 
             except ValueError:
