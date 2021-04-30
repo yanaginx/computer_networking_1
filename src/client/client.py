@@ -213,48 +213,51 @@ def client_start():
     global ADDR
     global reg_succeeded
     #=====================================================
+    while SERVER:
+        TCP_PORT = 34567 # to send the register info
+        ADDR = (SERVER, TCP_PORT)
+        # print("This is SERVER: "+SERVER)
+        # Sending 
+        client_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            client_send.connect(ADDR)
+        except Exception as e:
+            screen += str(e)
+            screen += "Can't connect to server. Exiting...\n"
+            sys.exit()
 
-    TCP_PORT = 34567 # to send the register info
-    ADDR = (SERVER, TCP_PORT)
 
-    # Sending 
-    client_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        client_send.connect(ADDR)
-    except Exception as e:
-        screen += str(e)
-        screen += "Can't connect to server. Exiting...\n"
-        sys.exit()
-
-
-    # Receiving
-    client_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    client_name = socket.gethostname()
-    
-    findIP()
-    print(ip_addr)
-    client_recv.bind((ip_addr, 0))
-    udp_port = client_recv.getsockname()[1]
-
-    info = {
-        "name" : client_name,
-        "ip" : ip_addr,
-        "UDP_port" : udp_port,
-        "time" : datetime.now().strftime("%H:%M:%S")
-    }
-    
-    info_msg = json.dumps(info)
-    while not reg_succeeded:
-        send(REGISTER_MSG, info_msg)
+        # Receiving
+        client_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        client_name = socket.gethostname()
         
-    if reg_succeeded:
-        thread_listening = threading.Thread(target=update_listening)
-        thread_sending = threading.Thread(target=info_sending)
-        thread_command = threading.Thread(target=input_command)
-        thread_listening.start()
-        thread_sending.start()
-        thread_command.start()
+        findIP()
+        # print(ip_addr)
+        client_recv.bind((ip_addr, 0))
+        udp_port = client_recv.getsockname()[1]
+
+        info = {
+            "name" : client_name,
+            "ip" : ip_addr,
+            "UDP_port" : udp_port,
+            "time" : datetime.now().strftime("%H:%M:%S")
+        }
+        
+        info_msg = json.dumps(info)
+        while not reg_succeeded:
+            send(REGISTER_MSG, info_msg)
+            
+        if reg_succeeded:
+            
+            thread_listening = threading.Thread(target=update_listening)
+            thread_sending = threading.Thread(target=info_sending)
+            thread_command = threading.Thread(target=input_command)
+            thread_listening.start()
+            thread_sending.start()
+            thread_command.start()
+        SERVER = ""
 def info_sending():
+    global INTERVAL
     global exiting
 
     while not exiting:
@@ -276,12 +279,14 @@ def info_sending():
 def update_listening():
     global INTERVAL
     global exiting
+    global info
+
 
     while not exiting:
         try:
             data, addr = client_recv.recvfrom(1024)
         except:
-            screen+= f"UDP port is now unavailable. Exiting...\n"
+            screen= f"UDP port is now unavailable. Exiting...\n"
             break
         msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
         # print(data)
@@ -308,18 +313,21 @@ def input_command():
     global server_unavailable
     global exit_confirmed
     global screen
+    global command
+    global command_signal
+
     while not exiting:
-        command = input()
-        if (command == "EXIT"):
-            exiting = True
-            client_recv.close()
-            if not server_unavailable:
-                screen += "DISCONNECTING:\n"
-                send(DISCONNECT_MSG, "")
-                t_end = time.time() + INTERVAL
-                while time.time() < t_end:
-                    if (exit_confirmed):
-                        screen += "DISCONNECTED!\n"
-                        return
+        if command_signal:
+            if (command == "EXIT"):
+                exiting = True
+                client_recv.close()
+                if not server_unavailable:
+                    screen += "DISCONNECTING:\n"
+                    send(DISCONNECT_MSG, "")
+                    t_end = time.time() + INTERVAL
+                    while time.time() < t_end:
+                        if (exit_confirmed):
+                            screen += "DISCONNECTED!\n"
+                            return
 
 

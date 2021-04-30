@@ -1,3 +1,4 @@
+import threading
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from requests import Session
@@ -7,6 +8,7 @@ import ipaddress
 import client
 
 first = 1
+ip = ""
 
 # GUI:
 app = QApplication([])
@@ -29,17 +31,35 @@ window.show()
 
 
 def display_new_messages():
-    text_area.clear()
-    text_area.setPlainText(client.screen+client.confirm)
+    global first
+    if first:
+        text_area.clear()
+        text_area.setPlainText("Please input Server IP address: ")
+    else:
+        text_area.clear()
+        text_area.setPlainText(client.screen+client.confirm)
 
 
 def send_message():
-    client.command = message.text()
-    client.command_signal = 1
-    message.clear()
+    global first
+    global ip
+    if first:
+        try:
+            client.SERVER=str(ipaddress.ip_address(message.text()))
+        except ValueError:
+            client.SERVER=""
+        if client.SERVER:
+            ip=message.text()
+            print("This is ip connection" + client.SERVER)
+            client.client_start()
+            first = 0
+            message.clear()
 
-client.SERVER ="192.168.43.79"
-client.client_start()
+    else:
+        client.command = message.text()
+        client.command_signal = 1
+        message.clear()
+        
 message.returnPressed.connect(send_message)
 timer = QTimer()
 timer.timeout.connect(display_new_messages)
