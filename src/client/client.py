@@ -67,6 +67,7 @@ exiting = False
 exit_confirmed = False
 server_unavailable = False
 packet_length = 1024
+ip_addr = ""
 
 info = {}
 
@@ -131,7 +132,7 @@ def send(cmd, msg):
     global cmd_count
     global screen
     global confirm
-    
+
     message = (cmd + msg).encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
@@ -195,7 +196,15 @@ def send(cmd, msg):
             server_unavailable = True
             return
 
-def client_start():    
+def findIP():
+    global ip_addr
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    ip_addr = s.getsockname()[0]
+    s.close()
+
+def client_start():
+    global ip_addr    
     global client_send  
     global client_recv
     global client_name
@@ -221,15 +230,9 @@ def client_start():
     # Receiving
     client_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_name = socket.gethostname()
-
-    ip_addr = ""
-    def findIP():
-        global ip_addr
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip_addr = s.getsockname()[0]
-        s.close()
+    
     findIP()
+    print(ip_addr)
     client_recv.bind((ip_addr, 0))
     udp_port = client_recv.getsockname()[1]
 
@@ -281,7 +284,7 @@ def update_listening():
             screen+= f"UDP port is now unavailable. Exiting...\n"
             break
         msg_length = data[0:HEADER].decode(FORMAT) # first 16 bytes
-        print(data)
+        # print(data)
         if(msg_length):
             try:
                 msg_length = int(msg_length)

@@ -91,6 +91,8 @@ def handle_client(conn, addr):
     global default_interval
     global client_id
     global screen_header
+    global slot
+    global active_slot
 
     slot_id = 0
     connected = True
@@ -98,10 +100,11 @@ def handle_client(conn, addr):
 
     header = f"[NEW CONNECTION] {addr} connected.\n"
     timestart = time.time()
-    for i in active_slot:
-        if not i:
-            active_slot[slot_id] = 1
-        slot_id=(slot_id+1)%4
+    for i in range(len(active_slot)):
+        if not active_slot[i]:
+            active_slot[i] = 1
+            slot_id=i
+            break
     slot[slot_id] = header
     while (connected):
         raw_msg = ""
