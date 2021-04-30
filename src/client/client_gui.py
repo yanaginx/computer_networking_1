@@ -6,6 +6,10 @@ from threading import Thread
 from time import sleep
 import ipaddress
 import client
+import os
+import subprocess
+
+# p = subprocess.Popen("OpenHardwareMonitor.exe", shell=True)
 
 first = 1
 ip = ""
@@ -44,6 +48,7 @@ def display_new_messages():
         text_area.clear()
         text_area.setPlainText(client.screen+client.confirm)
     if (client.exit_confirmed):
+        p.terminate()
         app.exit()
 
 

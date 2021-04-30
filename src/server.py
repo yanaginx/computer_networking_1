@@ -180,10 +180,9 @@ def handle_client(conn, addr):
                 if cmd == INFO_MSG:
                     now = datetime.now()
                     current_time = now.strftime("%H:%M:%S")
-                    slot[slot_id]+="\n"
                     slot[slot_id]+=f"ID: {current_id}\n"
                     slot[slot_id]+=f"Current Time = {current_time}\n"
-                    slot[slot_id]+=f"[{addr}] \n{msg}"
+                    slot[slot_id]+=f"{msg}"
                     try: 
                         conn.send("!INFO: RECEIVED".encode(FORMAT))
                     except Exception as e:
@@ -299,8 +298,8 @@ def server_start():
     global screen_header   
     findIP()
     screen_header = "[STARTING] Server is starting...\n"
-    thread_listening = threading.Thread(target=tcp_start)
-    thread_input = threading.Thread(target=input_command)
+    thread_listening = threading.Thread(target=tcp_start,daemon=True)
+    thread_input = threading.Thread(target=input_command,daemon=True)
     thread_listening.start()
     thread_input.start()
 

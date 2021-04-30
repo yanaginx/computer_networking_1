@@ -12,6 +12,8 @@ import platform
 import threading
 import subprocess
 import sys
+import wmi
+import pythoncom
 
 
 
@@ -95,6 +97,7 @@ cmd_count = {
 
 
 # this is hardcoded (no good), will find ways to code it better afterward
+
 def get_CPU_temp():
     global opened
 
@@ -103,18 +106,16 @@ def get_CPU_temp():
     if (platform.system() == 'Linux'):
         return f"CPU temperature: {psutil.sensors_temperatures()['cpu_thermal'][0].current}\n"
     if (platform.system() == 'Windows'):
-        import wmi
-        if not opened:
-            subprocess.Popen('OpenHardwareMonitor.exe', shell=True)
-            time.sleep(5)
-            opened = True
+        pythoncom.CoInitialize()
         w = wmi.WMI(namespace="root\OpenHardwareMonitor")
         temperature_infos = w.Sensor()
+        if not len(temperature_infos):
+            return f"No information\n"
         for sensor in temperature_infos:
             if sensor.SensorType==u'Temperature':
                 if (sensor.Name == 'CPU Package'):
                     return f"{sensor.Name}'s temp: {sensor.Value}\n"
-
+# print(get_CPU_temp())
 def get_cpu_percent():
     return f"Average CPU % used: {psutil.cpu_percent()}\n"
 
@@ -259,9 +260,9 @@ def client_start():
             client_restart = 1       
         if reg_succeeded:
             err = ""
-            thread_listening = threading.Thread(target=update_listening)
-            thread_sending = threading.Thread(target=info_sending)
-            thread_command = threading.Thread(target=input_command)
+            thread_listening = threading.Thread(target=update_listening,daemon=True)
+            thread_sending = threading.Thread(target=info_sending,daemon=True)
+            thread_command = threading.Thread(target=input_command,daemon=True)
             thread_listening.start()
             thread_sending.start()
             thread_command.start()
@@ -276,7 +277,7 @@ def info_sending():
             if exiting:
                 return
             # wait
-        msg = get_cpu_percent() + get_disk_usage() + get_RAM_usage()
+        msg = get_cpu_percent() + get_disk_usage() + get_RAM_usage() #+ get_CPU_temp()
         send(INFO_MSG, msg)
 
     # while not exiting:
@@ -293,6 +294,7 @@ def update_listening():
     global client_recv
     global screen
     global err
+    global confirm
     global exit_confirmed
     while not exiting:
         try:
